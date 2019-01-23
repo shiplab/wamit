@@ -2,11 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import re
 import math
-#def arquivo_analisa_wamit_in():
     
 def output_params():
     
-    # Leitura de parâmetros de rodada
+    # Reading running output parameters
     nome_out = 'force.out'
     arq_out_aux = open(nome_out,'r')
     arq_out = arq_out_aux.readlines()
@@ -160,7 +159,7 @@ def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180]):
     # Inputs (after must be imported from a configuration file)
     arq4 = np.loadtxt('force.4')
     ULEN = param_out[0][1]
-    NBODY = 1   # implementar função para ler número de corpos
+    NBODY = 1   # implement function to read the number of bodies
     
     # Column:  0-Period, 1-Incidence angle, 2-DOF, 3-Amp, 4-Phase, 5-Real, 6-Imag.
     # OPTN.4:    PER    BETA    I    Mod(ξi)    Pha(ξi)    Re(ξi)    Im(ξi)

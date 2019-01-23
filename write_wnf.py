@@ -1,9 +1,9 @@
 import numpy as np
-import analisa_wamit
+import analysis_wamit
 
-# Leitura de parâmetros de rodada (substituir pela função analisa_wamit.output_params())
+# Reading Output parameters
 
-[params,axis,vol,cb,cg,rest_coef,nome_out] = analisa_wamit.output_params()
+[params,axis,vol,cb,cg,rest_coef,nome_out] = analysis_wamit.output_params()
 
 [g,ulen,rho,water_depth,water_depth_aux] = params
 [xbody,ybody,zbody,phibody] = axis
@@ -12,24 +12,24 @@ import analisa_wamit
 [xg,yg,zg] = cg
 [c33,c34,c35,c44,c45,c46,c55,c56] = rest_coef
 
-# Reading Force file (substituir pela função 
-[mass,damp,rest_coef_ext] = analisa_wamit.read_frc()
+# Reading Force file 
+[mass,damp,rest_coef_ext] = analysis_wamit.read_frc()
 
 nomesDof = ['SURGE','SWAY','HEAVE','ROLL','PITCH','YAW']
     
 # Reading RAO
-[rao,rao_phase,per,inc,dof,arq4d] = analisa_wamit.raos()
+[rao,rao_phase,per,inc,dof,arq4d] = analysis_wamit.raos()
 
 # Reading Wave Forces
-[wforce,wforce_phase,arq2d] = analisa_wamit.wave_forces()
+[wforce,wforce_phase,arq2d] = analysis_wamit.wave_forces()
     
 # Reading Drift forces (Momentum)
-[wdforce,wdforce_phase,arq8d] = analisa_wamit.drift_forces_momentum()
+[wdforce,wdforce_phase,arq8d] = analysis_wamit.drift_forces_momentum()
 
 # Reading Added Mass and Potential Damping
-[added_mass,pot_damp,dof1,arq1d] = analisa_wamit.added_mass_pot_damping()
+[added_mass,pot_damp,dof1,arq1d] = analysis_wamit.added_mass_pot_damping()
 
-# Escreve os parâmetros no arquivo ship.wnf
+# Write parameters in ship.wnf
 wnf = open('ship.wnf','w')
 wnf.write('%OUT_FILE\n')
 wnf.write('"'+nome_out+'"\n\n')
@@ -44,7 +44,7 @@ wnf.write(str(rho)+'\n\n')
 wnf.write('%GRAVITY\n')
 wnf.write(str(g)+'\n\n')
 wnf.write('%DISPLACEMENT_VOLUME\n')
-#wnf.write('{:.1f}'.format(np.mean([xvol,yvol,zvol]))+'\n\n') #volume pela média
+#wnf.write('{:.1f}'.format(np.mean([xvol,yvol,zvol]))+'\n\n') #mean volume
 wnf.write('{:.1f}'.format(xvol)+'\n\n')
 wnf.write('%DISPLACEMENT_WEIGHT\n')
 wnf.write('{:.1f}'.format(mass[0][0])+'\n\n')

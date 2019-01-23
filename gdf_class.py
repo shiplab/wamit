@@ -10,32 +10,32 @@ from geomdl import BSpline
 #from geomdl.visualization import VisMPL as vis
 from numpy import linalg as la
 
-class Propriedades:
+class Properties:
     def __init__(self):
         pass
 
 class GDF:
-    def __init__(self,nome_arquivo):
-        self.nome_arquivo = nome_arquivo
-        propriedades = Propriedades
-        self.propriedades = propriedades
-        self.le_gdf()
+    def __init__(self,file_name):
+        self.file_name = file_name
+        properties = Properties
+        self.properties = properties
+        self.read_gdf()
         self.props()
   
-    def le_gdf(self):
-        fileID = open(self.nome_arquivo)
+    def read_gdf(self):
+        fileID = open(self.file_name)
         arqGDF=fileID.readlines()
         fileID.close()   
-        #padrao para ler números
+        #standard for reading numbers
         padrao = "[+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?"        
-        #Linha 1 -> Cabeçalho
-        #Linha 2 -> ULEN e g
+        #Line 1 -> Head
+        #Line 2 -> ULEN e g
         [ulen,g] = [float(i) for i in re.findall(padrao,arqGDF[1])]
-        #Linha 3 -> Ix e Iy
+        #Line 3 -> Ix e Iy
         [Isx,Isy] = [int(i) for i in re.findall(padrao,arqGDF[2])]
-        #Linha 4 -> Npatch e IGDEF
+        #Line 4 -> Npatch e IGDEF
         [Npatch,IGDEF] = [int(i) for i in re.findall(padrao,arqGDF[3])]
-        # Leitura dos numeros
+        # reading numbers
         x = []
         
         for j in range(4,len(arqGDF)):
@@ -43,7 +43,7 @@ class GDF:
             for i in k:
                 x.append(i)
         
-        #Inicialização de variáveis
+        # Variables initialization
         NUG = [None]*Npatch
         NVG = [None]*Npatch
         KUG = [None]*Npatch
@@ -97,7 +97,7 @@ class GDF:
                 XCOEF_3[ii].append(x[line])
                 line+=1
             
-#        [L,B,D,K] = avaliaExtremos(Isx,Isy,XCOEF_1,XCOEF_2,XCOEF_3)
+#        [L,B,D,K] = evalExtremes(Isx,Isy,XCOEF_1,XCOEF_2,XCOEF_3)
 #        print([L,B,D,K])
         self.ulen = ulen
         self.g = g
@@ -164,18 +164,18 @@ class GDF:
         BMl = [None]*self.Npatch
         
         self.irr=[]
-        [L,B,D,KG] = self.avaliaExtremos()
+        [L,B,D,KG] = self.evalExtremes()
         print('L = ' + "{:.2f}".format(L))
         print('B = ' + "{:.2f}".format(B))
         print('D = ' + "{:.2f}".format(D))
         print('KG = ' + "{:.2f}".format(KG))
         
-        #definição do calado manual (deve ser implementado como chamada de função)
+        # manual draft definition (must be implemented as function call)
         
         T = 10
         
         for ii in range(self.Npatch):
-            # determina quais quais patchs são irr=1
+            # determines which patches are irr=1
             if abs(np.max(self.XCOEF_3[ii])-np.min(self.XCOEF_3[ii]))<0.2:
                 self.irr.append(1)
             else:
@@ -199,8 +199,8 @@ class GDF:
             vertices[ii] = [list(surf[ii].tessellator.vertices[i].data) for i in range(len(surf[ii].tessellator.vertices))]
             faces[ii] = [list(surf[ii].tessellator.triangles[i].vertex_ids_zero) for i in range(len(surf[ii].tessellator.triangles))]
             
-            ##### IMPLEMENTAR FUNÇÃO QUE REDEFINE VERTICES E FACES COM BASE NO CALADO
-            # move quilha pra Z=0
+            ##### IMPLEMENT FUNCTION THAT REDEFINS VERTICES AND FACES BASED ON THE draft
+            # move keel to Z=0
             
             ###########################################################################
             
@@ -209,13 +209,13 @@ class GDF:
             centroide[ii] = []
 
             for fc in faces[ii]:
-                # Calculo do centroide
+                # Centroide Evaluation
                 xc = np.mean([vertices[ii][fc[0]][0], vertices[ii][fc[1]][0], vertices[ii][fc[2]][0]])
                 yc = np.mean([vertices[ii][fc[0]][1], vertices[ii][fc[1]][1], vertices[ii][fc[2]][1]])
                 zc = np.mean([vertices[ii][fc[0]][2], vertices[ii][fc[1]][2], vertices[ii][fc[2]][2]])+(KG-D)              
                 centroide[ii].append([xc, yc, zc])
                 
-                # Calculo da normal e da area
+                # Normal and area evaluation
                 u = np.array([vertices[ii][fc[1]][0] - vertices[ii][fc[0]][0], vertices[ii][fc[1]][1] - vertices[ii][fc[0]][1], vertices[ii][fc[1]][2] - vertices[ii][fc[0]][2]])
                 v = np.array([vertices[ii][fc[2]][0] - vertices[ii][fc[0]][0], vertices[ii][fc[2]][1] - vertices[ii][fc[0]][1], vertices[ii][fc[2]][2] - vertices[ii][fc[0]][2]])
                 
@@ -281,31 +281,30 @@ class GDF:
         GMl = KB + BMl - KG
         print('GMl = ' + "{:.2f}".format(GMl))
         
-        self.propriedades.vertices = vertices
-        self.propriedades.faces = faces
-        self.propriedades.area = area
-        self.propriedades.area_total = area_total
-        self.propriedades.normais = normais
-        self.propriedades.centroide = centroide
-        self.propriedades.Volx = Volx
-        self.propriedades.Voly = Voly
-        self.propriedades.Volz = Volz
-        self.propriedades.Volume = Volume
-        self.propriedades.Vx = Vx
-        self.propriedades.Vy = Vy
-        self.propriedades.Vz = Vz
-        self.propriedades.CB = CB
-        self.propriedades.LCF = LCF
-        self.propriedades.BM = BM
-        self.propriedades.BMl = BMl
-        self.propriedades.GM = GM
-        self.propriedades.GMl = GMl
+        self.properties.vertices = vertices
+        self.properties.faces = faces
+        self.properties.area = area
+        self.properties.area_total = area_total
+        self.properties.normais = normais
+        self.properties.centroide = centroide
+        self.properties.Volx = Volx
+        self.properties.Voly = Voly
+        self.properties.Volz = Volz
+        self.properties.Volume = Volume
+        self.properties.Vx = Vx
+        self.properties.Vy = Vy
+        self.properties.Vz = Vz
+        self.properties.CB = CB
+        self.properties.LCF = LCF
+        self.properties.BM = BM
+        self.properties.BMl = BMl
+        self.properties.GM = GM
+        self.properties.GMl = GMl
         pass
     
-    def escreveGDF(self,gdf_saida):
-#        [ulen,g,Isx,Isy,Npatch,IGDEF,NUG,NVG,KUG,KVG,NUA,NVA,Mu,Mv,NB,VKNTUG,VKNTVG,XCOEF_1,XCOEF_2,XCOEF_3] = infoGDF
-        gdf = open(gdf_saida,'w')
-        gdf.write('Arquivo gdf escalado\n')
+    def gdf_write(self,gdf_out):
+        gdf = open(gdf_out,'w')
+        gdf.write('SCALED GDF FILE\n')
         gdf.write(str(self.ulen) + ' ' + str(self.g) + ' ULEN GRAV\n')
         gdf.write(str(self.Isx) + ' ' + str(self.Isy) + ' ISX  ISY\n')
         gdf.write(str(self.Npatch) + ' ' + str(self.IGDEF) + ' NPATCH IGDEF\n')
@@ -324,20 +323,18 @@ class GDF:
         gdf.close()
         pass
     
-    def escalagdf(self,Lf,Bf,Df):
-        #    [ulen,g,Isx,Isy,Npatch,IGDEF,NUG,NVG,KUG,KVG,NUA,NVA,Mu,Mv,NB,VKNTUG,VKNTVG,XCOEF_1,XCOEF_2,XCOEF_3] = infoGDF
-        #    gdf_saida = 'scaled.gdf'
-        # Dimensoes finais
+    def gdf_scale(self,Lf,Bf,Df):
+        # Final Dimensions
         #    Lf = 250
         #    Bf = 45
         #    Df = 15
         
-        [L,B,D,K] = self.avaliaExtremos()
+        [L,B,D,K] = self.evalExtremes()
         
         if hasattr(self,'DimOriginal') == False:
             self.DimOriginal = [L,B,D,K]
         
-        # Exceções para superfícies planas    
+        # Exceptions for flat surfaces
         if L==0:
             L=1
             
@@ -360,12 +357,12 @@ class GDF:
         self.XCOEF_2 = XCOEF_2_n
         self.XCOEF_3 = XCOEF_3_n
         
-        [L1,B1,D1,K1] = self.avaliaExtremos()
+        [L1,B1,D1,K1] = self.evalExtremes()
         
         self.props()
         pass
     
-    def avaliaExtremos(self):
+    def evalExtremes(self):
         x_max = max([max(self.XCOEF_1[i]) for i in range(len(self.XCOEF_1))])
         x_min = min([min(self.XCOEF_1[i]) for i in range(len(self.XCOEF_1))])
         
@@ -392,19 +389,19 @@ class GDF:
         return [L,B,D,KG]
 
 #painel = GDF('aliv2.gdf')
-#print(painel.propriedades.area_total)
+#print(painel.properties.area_total)
 
 #import matplotlib.pyplot as plt
 #
 #plt.figure()
 #id_plot = 0
-#vertices = painel.propriedades.vertices[id_plot]
-#for fc in painel.propriedades.faces[id_plot]:
+#vertices = painel.properties.vertices[id_plot]
+#for fc in painel.properties.faces[id_plot]:
 #    x = [vertices[fc[0]][0], vertices[fc[1]][0], vertices[fc[2]][0], vertices[fc[0]][0]]
 #    y = [vertices[fc[0]][1], vertices[fc[1]][1], vertices[fc[2]][1], vertices[fc[0]][1]]
 #    plt.plot(x,y,'-b')
 #
-#for ct in painel.propriedades.centroide[id_plot]:
+#for ct in painel.properties.centroide[id_plot]:
 #    plt.plot(ct[0],ct[1],'x')
 #    
 #plt.show()
