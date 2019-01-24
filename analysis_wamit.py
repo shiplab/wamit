@@ -37,6 +37,8 @@ def output_params():
             [a0,a1,a2,a3,c55,c56] = [float(i) for i in re.findall(padrao,x)]
         if ('Center of Gravity  (Xg,Yg,Zg):' in x)==True:
             [xg,yg,zg] = [float(i) for i in re.findall(padrao,x)]
+            
+
         
     params = [g,ulen,rho,water_depth,water_depth_aux]
     axis = [xbody,ybody,zbody,phibody]
@@ -44,6 +46,18 @@ def output_params():
     cb = [xb,yb,zb]
     cg = [xg,yg,zg]
     rest_coef = [c33*g*rho*(ulen**2),c34*g*rho*(ulen**3),c35*g*rho*(ulen**3),c44*g*rho*(ulen**4),c45*g*rho*(ulen**4),c46*g*rho*(ulen**4),c55*g*rho*(ulen**4),c56*g*rho*(ulen**4)]
+    
+    
+    print('g = ' + "{:.2f}".format(g))
+    print('ULEN = ' + "{:.2f}".format(ulen))
+    if water_depth_aux == 1:
+        print('Water Depth = ' + water_depth)
+    else:
+        print('Water Depth = ' + "{:.2f}".format(water_depth))
+    print('Vols = ' + '[' + ', '.join(["{:.2f}".format(v) for v in vol]) + ']')
+    print('CoB = ' + '[' + ', '.join(["{:.2f}".format(v) for v in cb]) + ']')
+    print('CoG = ' + '[' + ', '.join(["{:.2f}".format(v) for v in cg]) + ']')
+    print('Wamit Axis = ' + '[' + ', '.join(["{:.2f}".format(v) for v in axis]) + ']')
     
     return [params,axis,vol,cb,cg,rest_coef,nome_out]
     
@@ -64,8 +78,10 @@ def read_frc():
         damp.append([float(i) for i in re.findall(padrao,x)])
 
     rest_coef_ext=[]
-    for x in arq_frc[12:12+6]:
+    for x in arq_frc[12+7:12+7+6]:
         rest_coef_ext.append([float(i) for i in re.findall(padrao,x)])
+    
+    print(mass)
     
     return [mass,damp,rest_coef_ext]
 
