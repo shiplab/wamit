@@ -14,6 +14,31 @@ def read_ULEN():
         if ('Gravity:' in x)==True:
             [g,ulen] = [float(i) for i in re.findall(padrao,x)]
     return ulen
+
+def verify_NBODY():
+    nome_out = 'force.out'
+    arq_out_aux = open(nome_out,'r')
+    arq_out = arq_out_aux.readlines()
+    arq_out_aux.close()
+    
+    stop=False
+    NBODY_Test = 1
+    NBODY = 1
+    while stop==False:
+#        print('N = {:d}'.format(NBODY_Test))
+        found=False
+        for x in arq_out: 
+            # Verify number of bodies NBODY_Test
+            if ('Body number: N=  {:d}'.format(NBODY_Test) in x)==True:
+#                print('Achou N = {:d}'.format(NBODY_Test))
+                NBODY = NBODY_Test
+                found=True
+        if found==False:
+            stop=True     
+        NBODY_Test += 1
+    
+    print('NBODY={:d}'.format(NBODY))
+    return NBODY
     
 def output_params(): 
     # Reading running output parameters
@@ -22,7 +47,15 @@ def output_params():
     arq_out = arq_out_aux.readlines()
     arq_out_aux.close()
     padrao = "[+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?"
-        
+    
+    NBODY = verify_NBODY()
+    
+    params = []
+    axis = []
+    vol = []
+    cb = []
+    cg = []
+    rest_coef = []           
     for x in arq_out:   
         if ('Gravity:' in x)==True:
             [g,ulen] = [float(i) for i in re.findall(padrao,x)]
@@ -34,49 +67,49 @@ def output_params():
             else:
                 [water_depth,rho] = [float(i) for i in re.findall(padrao,x)]
                 water_depth_aux=0
+            params.append([g,ulen,rho,water_depth,water_depth_aux])
         if ('XBODY =' in x)==True:
             [xbody,ybody,zbody,phibody] = [float(i) for i in re.findall(padrao,x)]
+            axis.append([xbody,ybody,zbody,phibody])
         if ('Volumes (VOLX,VOLY,VOLZ):' in x)==True:
             [xvol,yvol,zvol] = [float(i) for i in re.findall(padrao,x)]
+            vol.append([xvol,yvol,zvol])
         if ('Center of Buoyancy (Xb,Yb,Zb):' in x)==True:
             [xb,yb,zb] = [float(i) for i in re.findall(padrao,x)]
+            cb.append([xb,yb,zb])
         if ('C(3,3),C(3,4),C(3,5):' in x)==True:
             [a0,a1,a2,a3,a4,a5,c33,c34,c35] = [float(i) for i in re.findall(padrao,x)]
         if ('C(4,4),C(4,5),C(4,6):' in x)==True:
             [a0,a1,a2,a3,a4,a5,c44,c45,c46] = [float(i) for i in re.findall(padrao,x)]
         if ('C(5,5),C(5,6):' in x)==True:
             [a0,a1,a2,a3,c55,c56] = [float(i) for i in re.findall(padrao,x)]
+            rest_coef.append([c33*g*rho*(ulen**2),c34*g*rho*(ulen**3),c35*g*rho*(ulen**3),c44*g*rho*(ulen**4),c45*g*rho*(ulen**4),c46*g*rho*(ulen**4),c55*g*rho*(ulen**4),c56*g*rho*(ulen**4)])
         if ('Center of Gravity  (Xg,Yg,Zg):' in x)==True:
             [xg,yg,zg] = [float(i) for i in re.findall(padrao,x)]
-                     
-    params = [g,ulen,rho,water_depth,water_depth_aux]
-    axis = [xbody,ybody,zbody,phibody]
-    vol = [xvol,yvol,zvol]
-    cb = [xb,yb,zb]
-    cg = [xg,yg,zg]
-    rest_coef = [c33*g*rho*(ulen**2),c34*g*rho*(ulen**3),c35*g*rho*(ulen**3),c44*g*rho*(ulen**4),c45*g*rho*(ulen**4),c46*g*rho*(ulen**4),c55*g*rho*(ulen**4),c56*g*rho*(ulen**4)]
-    
-    dof_rest_coef =[[3,3],[3,4],[3,5],[4,4],[4,5],[4,6],[5,5],[5,6]]
-    
-    C = np.zeros((6,6))
-    cont=0
-    for x in dof_rest_coef:
-        C[x[0]-1,x[1]-1] = rest_coef[cont]
-        cont+=1
+            cg.append([xg,yg,zg])
+
         
-    mad = added_mass_pot_damping()
-    mad = mad[4]
-    
-    frc_out = read_frc() #substitute by read_mmx after
-    M = frc_out[0]
-    Mass = M[0,0]
-    Cext = frc_out[2]
-    
-    for i in [3,4]:
-        if i == 3:
-            GMt = (C[i,i]+Cext[i,i])/(Mass*g)
-        elif i == 4:
-            GMl = (C[i,i]+Cext[i,i])/(Mass*g)        
+#    dof_rest_coef =[[3,3],[3,4],[3,5],[4,4],[4,5],[4,6],[5,5],[5,6]]
+#    
+#    C = np.zeros((6,6))
+#    cont=0
+#    for x in dof_rest_coef:
+#        C[x[0]-1,x[1]-1] = rest_coef[cont]
+#        cont+=1
+#        
+#    mad = added_mass_pot_damping()
+#    mad = mad[4]
+#    
+#    frc_out = read_frc() #substitute by read_mmx after
+#    M = frc_out[0]
+#    Mass = M[0,0]
+#    Cext = frc_out[2]
+#    
+#    for i in [3,4]:
+#        if i == 3:
+#            GMt = (C[i,i]+Cext[i,i])/(Mass*g)
+#        elif i == 4:
+#            GMl = (C[i,i]+Cext[i,i])/(Mass*g)        
         
     
     print('g = {:.2f} m/s^2'.format(g))
@@ -85,39 +118,58 @@ def output_params():
         print('Water Depth = ' + water_depth)
     else:
         print('Water Depth = {:.2f} m'.format(water_depth))
-    print('Vols = ' + '[' + ', '.join(["{:.2f}".format(v) for v in vol]) + '] m^3')
-    print('Mass = {:.2f} t'.format(Mass))
-    print('CoB = ' + '[' + ', '.join(["{:.2f}".format(v) for v in cb]) + '] m')
-    print('CoG = ' + '[' + ', '.join(["{:.2f}".format(v) for v in cg]) + '] m')
-    print('Wamit Axis = ' + '[' + ', '.join(["{:.2f}".format(v) for v in axis]) + '] m')      
-    print('GMt = {:.2f} m'.format(GMt))
-    print('GMl = {:.2f} m'.format(GMl))
+    for ii in range(NBODY):
+        print('Body N = {:d}'.format(ii+1))
+        print('  Vols = ' + '[' + ', '.join(["{:.2f}".format(v) for v in vol[ii]]) + '] m^3')
+        #print('  Mass = {:.2f} t'.format(Mass[ii]))
+        print('  CoB = ' + '[' + ', '.join(["{:.2f}".format(v) for v in cb[ii]]) + '] m')
+        print('  CoG = ' + '[' + ', '.join(["{:.2f}".format(v) for v in cg[ii]]) + '] m')
+        print('  Wamit Axis = ' + '[' + ', '.join(["{:.2f}".format(v) for v in axis[ii]]) + '] m')      
+#        print('  GMt = {:.2f} m'.format(GMt[ii]))
+#        print('  GMl = {:.2f} m'.format(GMl[ii]))
     
     return [params,axis,vol,cb,cg,rest_coef,nome_out]
     
 def read_frc():
-    padrao = "[+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?"
-    # Reading Force file
-    nome_frc = 'ship.frc'
-    arq_frc_aux = open(nome_frc,'r')
-    arq_frc = arq_frc_aux.readlines()
+    # Read main file FRC to search for FRC files names
+    name_main_frc = 'force.frc'
+    arq_frc_aux = open(name_main_frc,'r')
+    arq_main_frc = arq_frc_aux.readlines()
     arq_frc_aux.close()
     
+    nome_main_frc=[]
+    for x in arq_main_frc[1:]:
+        if '.frc' in x:
+            pos=x.find('.frc')+4
+            nome_main_frc.append(x[0:pos])
+    
     mass=[]
-    for x in arq_frc[5:11]:
-        mass.append([float(i) for i in re.findall(padrao,x)])
-        
     damp=[]
-    for x in arq_frc[12:12+6]:
-        damp.append([float(i) for i in re.findall(padrao,x)])
-
     rest_coef_ext=[]
-    for x in arq_frc[12+7:12+7+6]:
-        rest_coef_ext.append([float(i) for i in re.findall(padrao,x)])
+            
+    for ii in range(len(nome_main_frc)):
+        padrao = "[+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?"
+        # Reading Force file
+        nome_frc = nome_main_frc[ii]
+        arq_frc_aux = open(nome_frc,'r')
+        arq_frc = arq_frc_aux.readlines()
+        arq_frc_aux.close()
         
-    mass = np.array(mass)
-    damp = np.array(damp)
-    rest_coef_ext = np.array(rest_coef_ext)
+        mass.append([])
+        for x in arq_frc[5:11]:
+            mass[ii].append([float(i) for i in re.findall(padrao,x)])
+            
+        damp.append([])
+        for x in arq_frc[12:12+6]:
+            damp[ii].append([float(i) for i in re.findall(padrao,x)])
+    
+        rest_coef_ext.append([])
+        for x in arq_frc[12+7:12+7+6]:
+            rest_coef_ext[ii].append([float(i) for i in re.findall(padrao,x)])
+            
+        mass[ii] = np.array(mass[ii])
+        damp[ii] = np.array(damp[ii])
+        rest_coef_ext[ii] = np.array(rest_coef_ext[ii])
     
     return [mass,damp,rest_coef_ext]
 
