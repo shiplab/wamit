@@ -87,7 +87,6 @@ def output_params():
         if ('Center of Gravity  (Xg,Yg,Zg):' in x)==True:
             [xg,yg,zg] = [float(i) for i in re.findall(padrao,x)]
             cg.append([xg,yg,zg])
-
         
 #    dof_rest_coef =[[3,3],[3,4],[3,5],[4,4],[4,5],[4,6],[5,5],[5,6]]
 #    
@@ -321,7 +320,7 @@ def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180]):
     return [rao,rao_phase,per,inc,dof,arq4d]
 
 
-def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180]):
+def wave_forces(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180]):
     param_out = output_params()
     arq2 = np.loadtxt('force.3')
     ULEN = param_out[0][1]
@@ -449,37 +448,50 @@ def drift_forces_momentum(plota=0,dof_plot=[1,2,6],inc_plot=[0,45,90,135,180]):
     return [wdforce,wdforce_phase,arq8d]
 
 def added_mass_pot_damping(plota=0):
-    arq1 = np.loadtxt('force.1')
+    
     ULEN = read_ULEN()
-#    print('added_mass_pot_damping: ULEN = {:.1f}'.format(ULEN))
+    #    print('added_mass_pot_damping: ULEN = {:.1f}'.format(ULEN))
+    NBODY = verify_NBODY()
+    # load .1 file
+    arq1 = np.loadtxt('force.1')
     # Unique with no sort
     per_a, idx = np.unique(arq1[:, 0], return_index=True)
     per = np.array([arq1[index, 0] for index in sorted(idx)])
+    # searching the evaluated dof's
+    dof = arq1[arq1[:,0]==per[0],1:3]
     
-    dim = np.ones(arq1.shape)
+    dof_aux = [1,2,3]
+    aux1 = []
+    for n in range(NBODY-1):
+        print(n)
+        for z in dof_aux:
+            aux1.append(z+6*(n+1))
     
+    [dof_aux.append(n) for n in aux1]
+    
+    #dim = np.ones(arq1.shape)
     dim = []
-    
     for ii in arq1:
         if ii[1]==ii[2]:
-            if ii[1]==1 or ii[1]==2 or ii[1]==3:
+            if ii[1] in dof_aux:
                 k=3
             else:
                 k=4
         else:
             k=5
-   
         dim.append([1,1,1,1.025*(ULEN**k),(2*np.pi/ii[0])*1.025*(ULEN**k)])
         
     arq1d = arq1*dim
     added_mass=[]
     pot_damp=[]
-    dof1 = [[1,1],[1,3],[1,5],[2,2],[2,4],[2,6],[3,1],[3,3],[3,5],[4,2],[4,4],[4,6],[5,1],[5,3],[5,5],[6,2],[6,4],[6,6]]
+    #dof1 = [[1,1],[1,3],[1,5],[2,2],[2,4],[2,6],[3,1],[3,3],[3,5],[4,2],[4,4],[4,6],[5,1],[5,3],[5,5],[6,2],[6,4],[6,6]]
     
     # Added Mass
     # 
     # Plane motion ->  lower frequency
+    # - At least 1 dof is surge, sway or yaw. Ex: [1,1],[1,3]
     # Out-plane motion -> mean between the mean and the max added mass
+    # - Both dof are out-plane. Ex: [3,3], [3,4]
     
     aux_mad_matrix = []
     aux_pdamp_matrix = []
