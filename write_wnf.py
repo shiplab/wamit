@@ -27,7 +27,7 @@ nomesDof = ['SURGE','SWAY','HEAVE','ROLL','PITCH','YAW']
 [wdforce,wdforce_phase,arq8d] = analysis_wamit.drift_forces_momentum()
 
 # Reading Added Mass and Potential Damping
-[added_mass,pot_damp,dof1,arq1d] = analysis_wamit.added_mass_pot_damping()
+[added_mass,pot_damp,dof1,arq1d,added_mass_matrix,pot_damp_matrix] = analysis_wamit.added_mass_pot_damping()
 
 # Write parameters in ship.wnf
 wnf = open('ship.wnf','w')

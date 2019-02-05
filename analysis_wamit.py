@@ -126,7 +126,7 @@ def plot_curves(tipo,arq_n_d,per,dof_plot,inc_plot):
     curve = []
     ax = []
     #Visualization parameter
-    t_inf = 5
+    t_inf = 0
     t_sup = 25
     #Name parameters
     names_dof = ['Surge', 'Sway', 'Heave',
