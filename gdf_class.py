@@ -388,20 +388,20 @@ class GDF:
         
         return [L,B,D,KG]
 
-#painel = GDF('aliv2.gdf')
-#print(painel.properties.area_total)
+painel = GDF('ship.gdf')
+print(painel.properties.area_total)
 
-#import matplotlib.pyplot as plt
-#
-#plt.figure()
-#id_plot = 0
-#vertices = painel.properties.vertices[id_plot]
-#for fc in painel.properties.faces[id_plot]:
-#    x = [vertices[fc[0]][0], vertices[fc[1]][0], vertices[fc[2]][0], vertices[fc[0]][0]]
-#    y = [vertices[fc[0]][1], vertices[fc[1]][1], vertices[fc[2]][1], vertices[fc[0]][1]]
-#    plt.plot(x,y,'-b')
-#
-#for ct in painel.properties.centroide[id_plot]:
-#    plt.plot(ct[0],ct[1],'x')
+import matplotlib.pyplot as plt
+
+plt.figure()
+id_plot = 0
+vertices = painel.properties.vertices[id_plot]
+for fc in painel.properties.faces[id_plot]:
+    x = [vertices[fc[0]][0], vertices[fc[1]][0], vertices[fc[2]][0], vertices[fc[0]][0]]
+    y = [vertices[fc[0]][1], vertices[fc[1]][1], vertices[fc[2]][1], vertices[fc[0]][1]]
+    plt.plot(x,y,'-b')
+
+for ct in painel.properties.centroide[id_plot]:
+    plt.plot(ct[0],ct[1],'x')
 #    
 #plt.show()
