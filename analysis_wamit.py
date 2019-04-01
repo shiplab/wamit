@@ -247,26 +247,30 @@ def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180]):
     arq4d = arq4*dim
 
     # RAO in complex form
-    rao_cpx = arq4d[:, 5] + arq4d[:, 6] * 1j
+    rao_c_aux = arq4d[:, 5] + arq4d[:, 6] * 1j
 
     # Function to interpolate the RAO in the given incidences
     
     rao = []
     rao_phase = []
+    rao_c =[]
     for ii in dof:
         aux = []
         aux2 = []
+        aux3 = []
         for jj in per:
             aux.append(arq4d[(arq4d[:, 2] == ii) & (arq4d[:, 0] == jj), 3])
             aux2.append(arq4d[(arq4d[:, 2] == ii) & (arq4d[:, 0] == jj), 4])
+            aux3.append(rao_c_aux[(arq4d[:, 2] == ii) & (arq4d[:, 0] == jj)])
         rao.append(aux)
         rao_phase.append(aux2)
+        rao_c.append(np.array(aux3))
         
     # plots
     if plota==1:      
         plot_curves('rao',arq4d,per,dof_plot,inc_plot)
     
-    return [rao,rao_phase,per,inc,dof,arq4d]
+    return [rao,rao_phase,per,inc,dof,arq4d,rao_c]
 
 
 def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180]):
@@ -468,8 +472,33 @@ def added_mass_pot_damping(plota=0):
     
     return [added_mass,pot_damp,dof1,arq1d,added_mass_matrix,pot_damp_matrix]
 
+def point_rao(points):
+    # function to evaluate the rao in specific points    
+    # Entry:
+    # points = [[x1, y1, z1], [x2, y2, z2], ...]
+    
+    points = np.array(points)
+    
+    out_rao = raos(0)
+    
+#    per = out_rao[2]
+#    inc = out_rao[3]
+#    dof = out_rao[4]
+    rao_c = out_rao[6]
+    
+    rao_p_i = []
+    rao_p_j = []
+    rao_p_k = []
+    for pt in points:
+        rao_p_i.append([ rao_c[0] - pt[1] * rao_c[5] + pt[2] * rao_c[4]])
+        rao_p_j.append([ rao_c[1] - pt[2] * rao_c[3] + pt[0] * rao_c[5]])              
+        rao_p_k.append([ rao_c[2] - pt[0] * rao_c[4] + pt[1] * rao_c[3]])
+    
+    return [rao_p_i, rao_p_j, rao_p_k]
+
 #debuggers
 #raos(1)
 #wave_forces(1)
 #drift_forces_momentum(1)
 #added_mass_pot_damping(plota=0)
+#point_rao([[100, 20, 30], [-100, 10, 0]])

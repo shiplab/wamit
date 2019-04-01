@@ -1,13 +1,15 @@
 from seaspectrum import seaspec, legenda
 import numpy as np
 import matplotlib.pyplot as plt
+import analysis_wamit
 
-plt.style.use('grayscale')
+
+#plt.style.use('grayscale')
 
 print(plt.style.available)
 
 Tp = np.arange(3.5, 10.5, .5)
-Hs = np.ones(Tp.shape)
+Hs = 2*np.ones(Tp.shape)
 Sw, w = seaspec(Tp, Hs)
 
 if isinstance(Tp, np.ndarray):
@@ -28,5 +30,4 @@ plt.ylabel('PSD [m.s²]')
 
 plt.show()
 
-
-
+rao = analysis_wamit.raos(1)
