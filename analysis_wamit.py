@@ -426,7 +426,10 @@ def added_mass_pot_damping(plota=0):
     arq1d = arq1*dim
     added_mass=[]
     pot_damp=[]
-    dof1 = [[1,1],[1,3],[1,5],[2,2],[2,4],[2,6],[3,1],[3,3],[3,5],[4,2],[4,4],[4,6],[5,1],[5,3],[5,5],[6,2],[6,4],[6,6]]
+    
+    dof1 = np.unique(arq1[:,1:3],axis=0)
+    
+    #dof1 = [[1,1],[1,3],[1,5],[2,2],[2,4],[2,6],[3,1],[3,3],[3,5],[4,2],[4,4],[4,6],[5,1],[5,3],[5,5],[6,2],[6,4],[6,6]]
     
     # Added Mass
     # 
@@ -444,7 +447,7 @@ def added_mass_pot_damping(plota=0):
         added_mass.append(aux)
         pot_damp.append(aux2)
         
-        if x == [3,3] or x == [3,5] or x == [4,4] or x == [5,3] or x == [5,5]:
+        if (x == [3,3]).all() or (x == [3,5]).all() or (x == [4,4]).all() or (x == [5,3]).all() or (x == [5,5]).all():
             aux_mad_matrix.append(np.mean([np.mean(aux),np.max(aux)]))
             aux_pdamp_matrix.append(np.mean([np.mean(aux2),np.max(aux2)]))
         else:
@@ -459,8 +462,8 @@ def added_mass_pot_damping(plota=0):
     
     cont = 0
     for x in dof1:
-        pos1 = x[0]-1
-        pos2 = x[1]-1
+        pos1 = int(x[0]-1)
+        pos2 = int(x[1]-1)
         added_mass_matrix[pos1,pos2] = aux_mad_matrix[cont]
         pot_damp_matrix[pos1,pos2] = aux_pdamp_matrix[cont]
         cont+=1
@@ -498,7 +501,7 @@ def point_rao(points):
 
 #debuggers
 #raos(1)
-#wave_forces(1)
+wave_forces(1,[1],[0])
 #drift_forces_momentum(1)
 #added_mass_pot_damping(plota=0)
 #point_rao([[100, 20, 30], [-100, 10, 0]])
