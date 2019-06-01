@@ -29,8 +29,8 @@ def verify_NBODY():
         found=False
         for x in arq_out: 
             # Verify number of bodies NBODY_Test
-            if ('Body number: N=  {:d}'.format(NBODY_Test) in x)==True:
-#                print('Achou N = {:d}'.format(NBODY_Test))
+            if ('Body number: N= {:d}'.format(NBODY_Test) in x)==True:
+                #print('Achou N = {:d}'.format(NBODY_Test))
                 NBODY = NBODY_Test
                 found=True
         if found==False:
@@ -50,7 +50,7 @@ def output_params():
     
     NBODY = verify_NBODY()
     
-    params = []
+    params_aux = []
     axis = []
     vol = []
     cb = []
@@ -67,7 +67,7 @@ def output_params():
             else:
                 [water_depth,rho] = [float(i) for i in re.findall(padrao,x)]
                 water_depth_aux=0
-            params.append([g,ulen,rho,water_depth,water_depth_aux])
+            params_aux.append([g,ulen,rho,water_depth,water_depth_aux])
         if ('XBODY =' in x)==True:
             [xbody,ybody,zbody,phibody] = [float(i) for i in re.findall(padrao,x)]
             axis.append([xbody,ybody,zbody,phibody])
@@ -127,6 +127,7 @@ def output_params():
 #        print('  GMt = {:.2f} m'.format(GMt[ii]))
 #        print('  GMl = {:.2f} m'.format(GMl[ii]))
     
+    params = params_aux[0]
     return [params,axis,vol,cb,cg,rest_coef,nome_out]
     
 def read_frc():
@@ -172,13 +173,12 @@ def read_frc():
     
     return [mass,damp,rest_coef_ext]
 
-def plot_curves(tipo,arq_n_d,per,dof_plot,inc_plot):
-    cont = 0
-    curve = []
-    ax = []
+def plot_curves(tipo,arq_n_d,per,dof_plot,inc_plot,NBODY):
+    
+
     #Visualization parameter
     t_inf = 5
-    t_sup = 25
+    t_sup = 20
     #Name parameters
     names_dof = ['Surge', 'Sway', 'Heave',
                  'Roll', 'Pitch', 'Yaw']
@@ -215,58 +215,79 @@ def plot_curves(tipo,arq_n_d,per,dof_plot,inc_plot):
         n_lin = dof_plot_len
     else:
         n_col = 2
-        n_lin = math.ceil(dof_plot_len/2)
-        
-    f1 = plt.figure(None, (5.7*n_col, 2.5*n_lin))
-    f1.canvas.set_window_title(name)
-    for ii in dof_plot:
-        aux = []
-        leg = []
-
-        for jj in inc_plot:
-            aux.append(arq_n_d[(arq_n_d[:, col_dof] == ii) & (arq_n_d[:, col_inc] == jj), col_plot])
-            leg.append('Inc = ' + str(jj) + 'deg')
-
-        aux = np.array(aux)
-        curve.append(aux)
-        ax = plt.subplot(n_lin, n_col, cont+1)
-        plt.grid(axis='both')
-        idx = (per >= t_inf) & (per <= t_sup)
-
-        # Defines a de-multiplier for plots that is necessary change units from rad to deg
-        if (ii == 4) | (ii == 5) | (ii == 6):
-            plt.plot(per, curve[cont].transpose() * deg_multiplier)
-            y_inf = curve[cont].min() * deg_multiplier
-            y_sup = curve[cont].max() * deg_multiplier
-        else:
-            plt.plot(per, curve[cont].transpose())
-            y_inf = curve[cont][:, idx].min()
-            y_sup = curve[cont][:, idx].max()
-        plt.xlim([t_inf, t_sup])
-
-        if y_inf != y_sup:
-            wd = .05*abs(y_sup - y_inf)
-            plt.ylim([y_inf-wd, y_sup+wd])
-
-        if cont == 0:
-            plt.legend(leg, loc='best')
-
-        plt.ylabel(names_dof[ii-1] + ' ' + units_dof[ii-1])
-        plt.xlabel('T [s]')
-        cont+=1
+        n_lin = dof_plot_len/2
     
-    plt.tight_layout()
+    nfigs=1    
+    if NBODY>1:
+        nfigs = 2
+    
+    f=[None for _ in range(nfigs)]
+    for ff in range(nfigs):
+        f[ff] = plt.figure(None, (5.7*n_col, 2.5*n_lin))
+        f[ff].canvas.set_window_title(name + ' - NBODY: {:d}'.format(ff+1))
+        
+        dp = np.array(dof_plot)
+        dp = dp + ff*6
+        
+        cont = 0
+        curve = []
+        for ii in dp:
+            #print(ii)
+            aux = []
+            leg = []
+    
+            for jj in inc_plot:
+                aux.append(arq_n_d[(arq_n_d[:, col_dof] == ii) & (arq_n_d[:, col_inc] == jj), col_plot])
+                leg.append('Inc = ' + str(jj) + 'deg')
+    
+            aux = np.array(aux)
+            curve.append(aux)
+            plt.subplot(n_lin, n_col, cont+1)
+            plt.grid(axis='both')
+            idx = (per >= t_inf) & (per <= t_sup)
+    
+            # Defines a deg-multiplier for plots that is necessary change units from rad to deg
+            if (ii == 4) | (ii == 5) | (ii == 6) | (ii == 10) | (ii == 11) | (ii == 12):
+                plt.plot(per, curve[cont].transpose() * deg_multiplier)
+                y_inf = curve[cont][:, idx].min() * deg_multiplier
+                y_sup = curve[cont][:, idx].max() * deg_multiplier
+#                if ii==12:
+#                    print([y_sup, y_inf])      
+            else:
+                plt.plot(per, curve[cont].transpose())
+                y_inf = curve[cont][:, idx].min()
+                y_sup = curve[cont][:, idx].max()
+            plt.xlim([t_inf, t_sup])
+            
+            if y_inf != y_sup:    
+                wd = .05*abs(y_sup - y_inf)
+                plt.ylim([y_inf-wd, y_sup+wd])
+    
+            if cont == 0:
+                plt.legend(leg, loc='best')
+    
+            plt.ylabel(names_dof[(ii-1) % 6] + ' ' + units_dof[(ii-1) % 6])
+            plt.xlabel('T [s]')
+            cont+=1
+    
+        plt.tight_layout()
     plt.show()
 
 
 def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180]):
     # from matplotlib.ticker import FormatStrFormatter
     # from scipy import interpolate
+    NBODY = verify_NBODY()
+    
     param_out = output_params()
     # Inputs (after must be imported from a configuration file)
     arq4 = np.loadtxt('force.4')
     ULEN = param_out[0][1]
-    NBODY = 1   # implement function to read the number of bodies
+    dof_plot_aux=[]
+#    if (NBODY==1)==False:
+#        for x in dof_plot:
+#            dof_plot_aux.append(x+1)
+#        dof_plot.append(dof_plot_aux)
     
     # Column:  0-Period, 1-Incidence angle, 2-DOF, 3-Amp, 4-Phase, 5-Real, 6-Imag.
     # OPTN.4:    PER    BETA    I    Mod(ξi)    Pha(ξi)    Re(ξi)    Im(ξi)
@@ -315,7 +336,7 @@ def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180]):
         
     # plots
     if plota==1:      
-        plot_curves('rao',arq4d,per,dof_plot,inc_plot)
+        plot_curves('rao',arq4d,per,dof_plot,inc_plot,NBODY)
     
     return [rao,rao_phase,per,inc,dof,arq4d]
 
@@ -533,6 +554,7 @@ def added_mass_pot_damping(plota=0):
     return [added_mass,pot_damp,dof1,arq1d,added_mass_matrix,pot_damp_matrix]
 
 #debuggers
+#op = output_params()
 #raos(1)
 #wave_forces(1)
 #drift_forces_momentum(1)
