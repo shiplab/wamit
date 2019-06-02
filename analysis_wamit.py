@@ -173,9 +173,11 @@ def read_frc():
     
     return [mass,damp,rest_coef_ext]
 
-def plot_curves(tipo,arq_n_d,per,dof_plot,inc_plot,NBODY):
+def plot_curves(tipo,arq_n_d,per,dof_plot,inc_plot,NBODY,pos_per):
     
-
+    if np.array(pos_per).size == 0:
+        pos_per = (per/per)==1
+        
     #Visualization parameter
     t_inf = 5
     t_sup = 20
@@ -241,7 +243,7 @@ def plot_curves(tipo,arq_n_d,per,dof_plot,inc_plot,NBODY):
                 leg.append('Inc = ' + str(jj) + 'deg')
     
             aux = np.array(aux)
-            curve.append(aux)
+            curve.append(aux[:,pos_per])
             plt.subplot(n_lin, n_col, cont+1)
             plt.grid(axis='both')
             idx = (per >= t_inf) & (per <= t_sup)
@@ -274,7 +276,7 @@ def plot_curves(tipo,arq_n_d,per,dof_plot,inc_plot,NBODY):
     plt.show()
 
 
-def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180]):
+def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180], remove_per=[]):
     # from matplotlib.ticker import FormatStrFormatter
     # from scipy import interpolate
     NBODY = verify_NBODY()
@@ -284,10 +286,6 @@ def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180]):
     arq4 = np.loadtxt('force.4')
     ULEN = param_out[0][1]
     dof_plot_aux=[]
-#    if (NBODY==1)==False:
-#        for x in dof_plot:
-#            dof_plot_aux.append(x+1)
-#        dof_plot.append(dof_plot_aux)
     
     # Column:  0-Period, 1-Incidence angle, 2-DOF, 3-Amp, 4-Phase, 5-Real, 6-Imag.
     # OPTN.4:    PER    BETA    I    Mod(ξi)    Pha(ξi)    Re(ξi)    Im(ξi)
@@ -295,6 +293,18 @@ def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180]):
     # Unique with no sort
     per_a, idx = np.unique(arq4[:, 0], return_index=True)
     per = np.array([arq4[index, 0] for index in sorted(idx)])
+    
+#    # identify period to remove from analysis
+    pos_per=[]
+    if np.array(remove_per).size > 0:
+        print('Removendo períodos:')
+        print(remove_per)
+        delta_p = .1
+        for p in remove_per:
+            pos_per.append(np.logical_not(np.logical_and(per > (p-delta_p), per < (p+delta_p))))
+            
+        pos_per = np.prod(np.array(pos_per),0)==1
+        per = per[pos_per]
 
     inc = np.unique(arq4[:, 1])
     dof = np.unique(arq4[:, 2])
@@ -336,7 +346,7 @@ def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180]):
         
     # plots
     if plota==1:      
-        plot_curves('rao',arq4d,per,dof_plot,inc_plot,NBODY)
+        plot_curves('rao',arq4d,per,dof_plot,inc_plot,NBODY,pos_per)
     
     return [rao,rao_phase,per,inc,dof,arq4d]
 
@@ -555,6 +565,7 @@ def added_mass_pot_damping(plota=0):
 
 #debuggers
 #op = output_params()
+#raos(1,remove_per=[18,19.3])
 #raos(1)
 #wave_forces(1)
 #drift_forces_momentum(1)
