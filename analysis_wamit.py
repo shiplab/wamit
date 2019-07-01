@@ -20,23 +20,20 @@ def verify_NBODY():
     arq_out_aux = open(nome_out,'r')
     arq_out = arq_out_aux.readlines()
     arq_out_aux.close()
+    padrao = "[+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?"
     
     stop=False
-    NBODY_Test = 1
+    NBODY_Test = []
     NBODY = 1
-    while stop==False:
-#        print('N = {:d}'.format(NBODY_Test))
-        found=False
-        for x in arq_out: 
-            # Verify number of bodies NBODY_Test
-            if ('Body number: N= {:d}'.format(NBODY_Test) in x)==True:
-                #print('Achou N = {:d}'.format(NBODY_Test))
-                NBODY = NBODY_Test
-                found=True
-        if found==False:
-            stop=True     
-        NBODY_Test += 1
     
+    for x in arq_out: 
+        if ('Body number: N='  in x)==True:
+            aux = re.findall(padrao,x)
+#            print(int(aux[0]))
+            NBODY_Test.append(int(aux[0]))
+            print('Achou N = {:d}'.format(int(aux[0])))
+
+    NBODY = max(NBODY_Test)   
     print('NBODY={:d}'.format(NBODY))
     return NBODY
     
@@ -570,3 +567,4 @@ def added_mass_pot_damping(plota=0):
 #wave_forces(1)
 #drift_forces_momentum(1)
 #added_mass_pot_damping(plota=0)
+#verify_NBODY()
