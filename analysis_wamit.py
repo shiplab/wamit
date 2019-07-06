@@ -32,8 +32,9 @@ def verify_NBODY():
 #            print(int(aux[0]))
             NBODY_Test.append(int(aux[0]))
             print('Achou N = {:d}'.format(int(aux[0])))
-
-    NBODY = max(NBODY_Test)   
+    
+    if len(NBODY_Test) > 0:
+        NBODY = max(NBODY_Test)   
     print('NBODY={:d}'.format(NBODY))
     return NBODY
     
@@ -124,7 +125,11 @@ def output_params():
 #        print('  GMt = {:.2f} m'.format(GMt[ii]))
 #        print('  GMl = {:.2f} m'.format(GMl[ii]))
     
-    params = params_aux[0]
+    params = params_aux[0:NBODY]
+    axis = axis[0:NBODY]
+    vol = vol[0:NBODY]
+    cb = cb[0:NBODY]
+    rest_coef = rest_coef[0:NBODY]
     return [params,axis,vol,cb,cg,rest_coef,nome_out]
     
 def read_frc():
@@ -176,7 +181,7 @@ def plot_curves(tipo,arq_n_d,per,dof_plot,inc_plot,NBODY,pos_per):
         pos_per = (per/per)==1
         
     #Visualization parameter
-    t_inf = 5
+    t_inf = 0
     t_sup = 20
     #Name parameters
     names_dof = ['Surge', 'Sway', 'Heave',
