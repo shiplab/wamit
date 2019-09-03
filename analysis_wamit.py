@@ -125,11 +125,7 @@ def output_params():
 #        print('  GMt = {:.2f} m'.format(GMt[ii]))
 #        print('  GMl = {:.2f} m'.format(GMl[ii]))
     
-    params = params_aux[0:NBODY]
-    axis = axis[0:NBODY]
-    vol = vol[0:NBODY]
-    cb = cb[0:NBODY]
-    rest_coef = rest_coef[0:NBODY]
+    params = params_aux[0]
     return [params,axis,vol,cb,cg,rest_coef,nome_out]
     
 def read_frc():
@@ -279,6 +275,14 @@ def plot_curves(tipo,arq_n_d,per,dof_plot,inc_plot,NBODY,pos_per):
 
 
 def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180], remove_per=[]):
+    '''Evaluate and Plot the Wamit RAO output.
+         Parameters
+         ----------
+         - plota: binary flag to plot curves
+         - dof_plot: list degrees of freedom to plot
+         - inc_plot: list of headings to plot
+         - remove_per: list of periods or frequencies to remove from analysis
+    '''
     # from matplotlib.ticker import FormatStrFormatter
     # from scipy import interpolate
     NBODY = verify_NBODY()
@@ -517,7 +521,7 @@ def added_mass_pot_damping(plota=0):
     arq1d = arq1*dim
     added_mass=[]
     pot_damp=[]
-    #dof1 = [[1,1],[1,3],[1,5],[2,2],[2,4],[2,6],[3,1],[3,3],[3,5],[4,2],[4,4],[4,6],[5,1],[5,3],[5,5],[6,2],[6,4],[6,6]]
+    dof1 = [[1,1],[1,3],[1,5],[2,2],[2,4],[2,6],[3,1],[3,3],[3,5],[4,2],[4,4],[4,6],[5,1],[5,3],[5,5],[6,2],[6,4],[6,6]]
     
     # Added Mass
     # 
