@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import interactive
 import re
 import math
 
@@ -121,7 +122,7 @@ def read_frc():
     
     return [mass,damp,rest_coef_ext]
 
-def plot_curves(tipo,arq_n_d,per,dof_plot,inc_plot):
+def plot_curves(tipo,arq_n_d,per,dof_plot,inc_plot,multi_fig=False):
     cont = 0
     curve = []
     ax = []
@@ -182,7 +183,7 @@ def plot_curves(tipo,arq_n_d,per,dof_plot,inc_plot):
         plt.grid(axis='both')
         idx = (per >= t_inf) & (per <= t_sup)
 
-        # Defines a de-multiplier for plots that is necessary change units from rad to deg
+        # Defines a deg-multiplier for plots that is necessary change units from rad to deg
         if (ii == 4) | (ii == 5) | (ii == 6):
             plt.plot(per, curve[cont].transpose() * deg_multiplier)
             y_inf = curve[cont].min() * deg_multiplier
@@ -205,10 +206,11 @@ def plot_curves(tipo,arq_n_d,per,dof_plot,inc_plot):
         cont+=1
     
     plt.tight_layout()
-    plt.show()
+    if multi_fig == False:
+        plt.show()
 
 
-def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180]):
+def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180],multi_fig=False):
     # from matplotlib.ticker import FormatStrFormatter
     # from scipy import interpolate
     param_out = output_params()
@@ -268,12 +270,12 @@ def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180]):
         
     # plots
     if plota==1:      
-        plot_curves('rao',arq4d,per,dof_plot,inc_plot)
+        plot_curves('rao',arq4d,per,dof_plot,inc_plot,multi_fig)
     
     return [rao,rao_phase,per,inc,dof,arq4d,rao_c]
 
 
-def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180]):
+def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180],multi_fig=False):
     param_out = output_params()
     arq2 = np.loadtxt('force.3')
     ULEN = param_out[0][1]
@@ -327,11 +329,11 @@ def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180]):
         
     # plots
     if plota==1:      
-        plot_curves('wf',arq2d,per,dof_plot,inc_plot)
+        plot_curves('wf',arq2d,per,dof_plot,inc_plot,multi_fig)
         
     return [wforce,wforce_phase,arq2d]
 
-def drift_forces_momentum(plota=0,dof_plot=[1,2,6],inc_plot=[0,45,90,135,180]):
+def drift_forces_momentum(plota=0,dof_plot=[1,2,6],inc_plot=[0,45,90,135,180],multi_fig=False):
     
     param_out = output_params()
     arq8 = np.loadtxt('force.8')
@@ -396,11 +398,11 @@ def drift_forces_momentum(plota=0,dof_plot=[1,2,6],inc_plot=[0,45,90,135,180]):
         
     # plots
     if plota==1:      
-        plot_curves('mdf',arq8d,per,dof_plot,inc_plot)
+        plot_curves('mdf',arq8d,per,dof_plot,inc_plot,multi_fig)
     
     return [wdforce,wdforce_phase,arq8d]
 
-def added_mass_pot_damping(plota=0):
+def added_mass_pot_damping(plota=0,multi_fig=False):
     arq1 = np.loadtxt('force.1')
     ULEN = read_ULEN()
 #    print('added_mass_pot_damping: ULEN = {:.1f}'.format(ULEN))
@@ -501,7 +503,7 @@ def point_rao(points):
 
 #debuggers
 #raos(1)
-wave_forces(1,[1],[0])
+#wave_forces(1,[1],[0])
 #drift_forces_momentum(1)
 #added_mass_pot_damping(plota=0)
 #point_rao([[100, 20, 30], [-100, 10, 0]])
