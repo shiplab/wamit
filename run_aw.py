@@ -17,7 +17,7 @@ for line in contents:
 import analysis_wamit
 
 if added_mass == True:
-    a = analysis_wamit.added_mass_pot_damping(1)
+    a = analysis_wamit.added_mass_pot_damping(1, dof_plot, multi_fig=True)
 
 if rao == True:
     r = analysis_wamit.raos(1, dof_plot, inc_plot, multi_fig=True)

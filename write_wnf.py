@@ -18,16 +18,16 @@ import analysis_wamit
 nomesDof = ['SURGE','SWAY','HEAVE','ROLL','PITCH','YAW']
     
 # Reading RAO
-[rao,rao_phase,per,inc,dof,arq4d] = analysis_wamit.raos()
+[rao, rao_phase, per, inc, dof, arq4d, rao_c] = analysis_wamit.raos()
 
 # Reading Wave Forces
-[wforce,wforce_phase,arq2d] = analysis_wamit.wave_forces()
+[wforce, wforce_phase, arq2d] = analysis_wamit.wave_forces()
     
 # Reading Drift forces (Momentum)
-[wdforce,wdforce_phase,arq8d] = analysis_wamit.drift_forces_momentum()
+[wdforce, wdforce_phase, arq8d] = analysis_wamit.drift_forces_momentum()
 
 # Reading Added Mass and Potential Damping
-[added_mass,pot_damp,dof1,arq1d,added_mass_matrix,pot_damp_matrix] = analysis_wamit.added_mass_pot_damping()
+[added_mass, pot_damp, dof1, arq1d, added_mass_matrix, pot_damp_matrix] = analysis_wamit.added_mass_pot_damping()
 
 # Write parameters in ship.wnf
 wnf = open('ship.wnf','w')
@@ -163,7 +163,7 @@ for j in range(dof.size):
 tx_ad = 12*' '
 
 for x in dof1:
-    tx_ad = tx_ad + 10*' ' + 'A(' + '{:d}'.format(x[0]) + ',' '{:d}'.format(x[1]) + ')'
+    tx_ad = tx_ad + 10*' ' + 'A(' + '{:d}'.format(int(x[0])) + ',' '{:d}'.format(int(x[1])) + ')'
 wnf.write('\n')
 wnf.write('%ADDED_MASS\n')
 wnf.write(tx_ad + '\n')
@@ -180,7 +180,7 @@ for i in range(per.size):
 tx_pd = 12*' '
 
 for x in dof1:
-    tx_pd = tx_pd + 10*' ' + 'B(' + '{:d}'.format(x[0]) + ',' '{:d}'.format(x[1]) + ')'
+    tx_pd = tx_pd + 10*' ' + 'B(' + '{:d}'.format(int(x[0])) + ',' '{:d}'.format(int(x[1])) + ')'
 
 wnf.write('\n')
 wnf.write('%POTENTIAL_DAMPING_COEFFICIENTS\n')

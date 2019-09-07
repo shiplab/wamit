@@ -1,8 +1,7 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import interactive
 import re
 import math
+from plot_curves import plot_curves
 
 def read_ULEN():
     nome_out = 'force.out'
@@ -42,11 +41,11 @@ def output_params():
         if ('Center of Buoyancy (Xb,Yb,Zb):' in x)==True:
             [xb,yb,zb] = [float(i) for i in re.findall(padrao,x)]
         if ('C(3,3),C(3,4),C(3,5):' in x)==True:
-            [a0,a1,a2,a3,a4,a5,c33,c34,c35] = [float(i) for i in re.findall(padrao,x)]
+            [_,_,_,_,_,_,c33,c34,c35] = [float(i) for i in re.findall(padrao,x)]
         if ('C(4,4),C(4,5),C(4,6):' in x)==True:
-            [a0,a1,a2,a3,a4,a5,c44,c45,c46] = [float(i) for i in re.findall(padrao,x)]
+            [_,_,_,_,_,_,c44,c45,c46] = [float(i) for i in re.findall(padrao,x)]
         if ('C(5,5),C(5,6):' in x)==True:
-            [a0,a1,a2,a3,c55,c56] = [float(i) for i in re.findall(padrao,x)]
+            [_,_,_,_,c55,c56] = [float(i) for i in re.findall(padrao,x)]
         if ('Center of Gravity  (Xg,Yg,Zg):' in x)==True:
             [xg,yg,zg] = [float(i) for i in re.findall(padrao,x)]
                      
@@ -79,7 +78,7 @@ def output_params():
         elif i == 4:
             GMl = (C[i,i]+Cext[i,i])/(Mass*g)        
         
-    
+    print('** WAMIT OUTPUT PARAMETERS - HYDROSCRIPTS **')
     print('g = {:.2f} m/s^2'.format(g))
     print('ULEN = {:.2f}'.format(ulen))
     if water_depth_aux == 1:
@@ -93,6 +92,7 @@ def output_params():
     print('Wamit Axis = ' + '[' + ', '.join(["{:.2f}".format(v) for v in axis]) + '] m')      
     print('GMt = {:.2f} m'.format(GMt))
     print('GMl = {:.2f} m'.format(GMl))
+    print(' ')
     
     return [params,axis,vol,cb,cg,rest_coef,nome_out]
     
@@ -121,94 +121,6 @@ def read_frc():
     rest_coef_ext = np.array(rest_coef_ext)
     
     return [mass,damp,rest_coef_ext]
-
-def plot_curves(tipo,arq_n_d,per,dof_plot,inc_plot,multi_fig=False):
-    cont = 0
-    curve = []
-    ax = []
-    #Visualization parameter
-    t_inf = 0
-    t_sup = 25
-    #Name parameters
-    names_dof = ['Surge', 'Sway', 'Heave',
-                 'Roll', 'Pitch', 'Yaw']
-    
-    deg_multiplier = 1
-    
-    if tipo == 'rao':
-        col_inc=1
-        col_dof=2
-        col_plot=3
-        name = 'Response Amplitude Operator'
-        units_dof = ['[m/m]', '[m/m]', '[m/m]',
-                     '[deg/m]', '[deg/m]', '[deg/m]']
-        deg_multiplier = 180 / np.pi
-    elif tipo == 'mdf':
-        col_inc=1
-        col_dof=3
-        col_plot=4
-        name = 'Mean drift forces'
-        units_dof = ['[kN]', '[kN]', '[kN]',
-                     '[kN.m]', '[kN.m]', '[kN.m]']
-    elif tipo == 'wf':
-        col_inc=1
-        col_dof=2
-        col_plot=3
-        name = 'Wave forces'
-        units_dof = ['[kN]', '[kN]', '[kN]',
-                     '[kN.m]', '[kN.m]', '[kN.m]']
-    
-    dof_plot_len = len(dof_plot)
-    
-    if dof_plot_len<=3:
-        n_col = 1
-        n_lin = dof_plot_len
-    else:
-        n_col = 2
-        n_lin = math.ceil(dof_plot_len/2)
-        
-    f1 = plt.figure(None, (5.7*n_col, 2.5*n_lin))
-    f1.canvas.set_window_title(name)
-    for ii in dof_plot:
-        aux = []
-        leg = []
-
-        for jj in inc_plot:
-            aux.append(arq_n_d[(arq_n_d[:, col_dof] == ii) & (arq_n_d[:, col_inc] == jj), col_plot])
-            leg.append('Inc = ' + str(jj) + 'deg')
-
-        aux = np.array(aux)
-        curve.append(aux)
-        ax = plt.subplot(n_lin, n_col, cont+1)
-        plt.grid(axis='both')
-        idx = (per >= t_inf) & (per <= t_sup)
-
-        # Defines a deg-multiplier for plots that is necessary change units from rad to deg
-        if (ii == 4) | (ii == 5) | (ii == 6):
-            plt.plot(per, curve[cont].transpose() * deg_multiplier)
-            y_inf = curve[cont].min() * deg_multiplier
-            y_sup = curve[cont].max() * deg_multiplier
-        else:
-            plt.plot(per, curve[cont].transpose())
-            y_inf = curve[cont][:, idx].min()
-            y_sup = curve[cont][:, idx].max()
-        plt.xlim([t_inf, t_sup])
-
-        if y_inf != y_sup:
-            wd = .05*abs(y_sup - y_inf)
-            plt.ylim([y_inf-wd, y_sup+wd])
-
-        if cont == 0:
-            plt.legend(leg, loc='best')
-
-        plt.ylabel(names_dof[ii-1] + ' ' + units_dof[ii-1])
-        plt.xlabel('T [s]')
-        cont+=1
-    
-    plt.tight_layout()
-    if multi_fig == False:
-        plt.show()
-
 
 def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180],multi_fig=False):
     # from matplotlib.ticker import FormatStrFormatter
@@ -272,7 +184,7 @@ def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180],multi_fig=F
     if plota==1:      
         plot_curves('rao',arq4d,per,dof_plot,inc_plot,multi_fig)
     
-    return [rao,rao_phase,per,inc,dof,arq4d,rao_c]
+    return [rao, rao_phase, per, inc, dof, arq4d, rao_c]
 
 
 def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180],multi_fig=False):
@@ -331,16 +243,14 @@ def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180],multi_
     if plota==1:      
         plot_curves('wf',arq2d,per,dof_plot,inc_plot,multi_fig)
         
-    return [wforce,wforce_phase,arq2d]
+    return [wforce, wforce_phase, arq2d]
 
-def drift_forces_momentum(plota=0,dof_plot=[1,2,6],inc_plot=[0,45,90,135,180],multi_fig=False):
+def drift_forces_momentum(plota=0, dof_plot=[1,2,6], inc_plot=[0,45,90,135,180], multi_fig=False):
     
     param_out = output_params()
     arq8 = np.loadtxt('force.8')
     ULEN = param_out[0][1]
-    t_inf = 5
-    t_sup = 25
-    inc_plot = np.arange(0, 181, 45)
+    
     # Unique with no sort
     per_a, idx = np.unique(arq8[:, 0], return_index=True)
     per = np.array([arq8[index, 0] for index in sorted(idx)])
@@ -398,16 +308,17 @@ def drift_forces_momentum(plota=0,dof_plot=[1,2,6],inc_plot=[0,45,90,135,180],mu
         
     # plots
     if plota==1:      
-        plot_curves('mdf',arq8d,per,dof_plot,inc_plot,multi_fig)
+        plot_curves('mdf', arq8d, per, dof_plot, inc_plot, multi_fig)
     
-    return [wdforce,wdforce_phase,arq8d]
+    return [wdforce, wdforce_phase, arq8d]
 
-def added_mass_pot_damping(plota=0,multi_fig=False):
+def added_mass_pot_damping(plota=0, dof_plot=[1,2,3,4,5,6], multi_fig=False):
+    # ATENTION: FOR THE ADDED MASS AND POT DAMPING THERE IS NO INCLINATION, SO INC_PLOT
     arq1 = np.loadtxt('force.1')
     ULEN = read_ULEN()
 #    print('added_mass_pot_damping: ULEN = {:.1f}'.format(ULEN))
     # Unique with no sort
-    per_a, idx = np.unique(arq1[:, 0], return_index=True)
+    _, idx = np.unique(arq1[:, 0], return_index=True)
     per = np.array([arq1[index, 0] for index in sorted(idx)])
     
     dim = np.ones(arq1.shape)
@@ -474,8 +385,13 @@ def added_mass_pot_damping(plota=0,multi_fig=False):
     added_mass = added_mass[0]
     pot_damp = np.transpose(pot_damp)
     pot_damp = pot_damp[0]
+
+    # plots
+    if plota==1:      
+        plot_curves('a', arq1d, per, dof_plot, [], multi_fig)
+        plot_curves('b', arq1d, per, dof_plot, [], multi_fig)
     
-    return [added_mass,pot_damp,dof1,arq1d,added_mass_matrix,pot_damp_matrix]
+    return [added_mass, pot_damp, dof1, arq1d, added_mass_matrix, pot_damp_matrix]
 
 def point_rao(points):
     # function to evaluate the rao in specific points    
