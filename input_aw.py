@@ -13,6 +13,7 @@ T_lim = [0,30]
 
 # Desired Analysis
 added_mass = True
+wave_forces = True
 rao = True
 drift = True
 drift_analysis = ['m'] # 'm' - momentum, 'p' - pressure, 'c' - control surface

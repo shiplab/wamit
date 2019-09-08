@@ -63,9 +63,6 @@ def output_params():
     for x in dof_rest_coef:
         C[x[0]-1,x[1]-1] = rest_coef[cont]
         cont+=1
-        
-    mad = added_mass_pot_damping()
-    mad = mad[4]
     
     frc_out = read_frc() #substitute by read_mmx after
     M = frc_out[0]
@@ -122,14 +119,15 @@ def read_frc():
     
     return [mass,damp,rest_coef_ext]
 
-def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180],multi_fig=False, T_lim = [0, 25]):
+def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180], multi_fig=False, T_lim = [0, 25], param_out=[]):
     # from matplotlib.ticker import FormatStrFormatter
     # from scipy import interpolate
-    param_out = output_params()
+    if not param_out:
+        param_out = output_params()
+
     # Inputs (after must be imported from a configuration file)
     arq4 = np.loadtxt('force.4')
     ULEN = param_out[0][1]
-    NBODY = 1   # implement function to read the number of bodies
     
     # Column:  0-Period, 1-Incidence angle, 2-DOF, 3-Amp, 4-Phase, 5-Real, 6-Imag.
     # OPTN.4:    PER    BETA    I    Mod(ξi)    Pha(ξi)    Re(ξi)    Im(ξi)
@@ -183,12 +181,18 @@ def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180],multi_fig=F
     # plots
     if plota==1:      
         plot_curves('rao',arq4d,per,dof_plot,inc_plot,multi_fig, T_lim=T_lim)
-    
+
+    print('')
+    print(' * Response Ampitude Operator')
+
     return [rao, rao_phase, per, inc, dof, arq4d, rao_c]
 
 
-def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180],multi_fig=False, T_lim = [0, 25]):
-    param_out = output_params()
+def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180],multi_fig=False, T_lim = [0, 25], param_out=[]):
+
+    if not param_out:
+        param_out = output_params()
+
     arq2 = np.loadtxt('force.3')
     ULEN = param_out[0][1]
     # Unique with no sort
@@ -242,17 +246,22 @@ def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180],multi_
     # plots
     if plota==1:      
         plot_curves('wf',arq2d,per,dof_plot,inc_plot,multi_fig, T_lim=T_lim)
-        
+
+    print('')
+    print(' * Wave forces')  
     return [wforce, wforce_phase, arq2d]
 
-def drift_forces(plota=0, drift_analysis_type = 'm', dof_plot=[1,2,6], inc_plot=[0,45,90,135,180], multi_fig=False, T_lim = [0, 25]):
+def drift_forces(plota=0, drift_analysis_type = 'm', dof_plot=[1,2,6], inc_plot=[0,45,90,135,180], multi_fig=False, T_lim = [0, 25], param_out=[]):
     
     dt_arq_name = {'m': 'force.8', 'p': 'force.9', 'c': 'force.7'}
     dt_message = {'m': 'Momentum', 'p': 'Pressure', 'c': 'Control Surface'}
     arq_name = dt_arq_name[drift_analysis_type]
+    print('')  
     print(' * Drift Analysis: ' + dt_message[drift_analysis_type])
     
-    param_out = output_params()
+    if not param_out:
+        param_out = output_params()
+
     arq8 = np.loadtxt(arq_name)
     ULEN = param_out[0][1]
     
@@ -317,10 +326,14 @@ def drift_forces(plota=0, drift_analysis_type = 'm', dof_plot=[1,2,6], inc_plot=
     
     return [wdforce, wdforce_phase, arq8d]
 
-def added_mass_pot_damping(plota=0, dof_plot=[1,2,3,4,5,6], multi_fig=False, T_lim = [0, 25]):
-    # ATENTION: FOR THE ADDED MASS AND POT DAMPING THERE IS NO INCLINATION, SO INC_PLOT
+def added_mass_pot_damping(plota=0, dof_plot=[1,2,3,4,5,6], multi_fig=False, T_lim = [0, 25], param_out=[]):
+    
+    if not param_out:
+        param_out = output_params()
+
+    ULEN = param_out[0][1]
     arq1 = np.loadtxt('force.1')
-    ULEN = read_ULEN()
+    
 #    print('added_mass_pot_damping: ULEN = {:.1f}'.format(ULEN))
     # Unique with no sort
     _, idx = np.unique(arq1[:, 0], return_index=True)
@@ -396,6 +409,8 @@ def added_mass_pot_damping(plota=0, dof_plot=[1,2,3,4,5,6], multi_fig=False, T_l
         plot_curves('a', arq1d, per, dof_plot, [], multi_fig, T_lim=T_lim)
         plot_curves('b', arq1d, per, dof_plot, [], multi_fig, T_lim=T_lim)
     
+    print('')
+    print(' * Added Mass and Potential Damping')
     return [added_mass, pot_damp, dof1, arq1d, added_mass_matrix, pot_damp_matrix]
 
 def point_rao(points):

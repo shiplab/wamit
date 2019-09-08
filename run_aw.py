@@ -16,19 +16,24 @@ for line in contents:
     
 import analysis_wamit
 
-if added_mass == True:
-    a = analysis_wamit.added_mass_pot_damping(plota=1, dof_plot=dof_plot, multi_fig=True, T_lim=T_lim)
+p_out = analysis_wamit.output_params()
 
-if rao == True:
-    r = analysis_wamit.raos(plota=1, dof_plot=dof_plot, inc_plot=inc_plot, multi_fig=True, T_lim=T_lim)
+if added_mass:
+    a = analysis_wamit.added_mass_pot_damping(plota=1, dof_plot=dof_plot, multi_fig=True, T_lim=T_lim, param_out=p_out)
 
-if drift == True:
+if wave_forces:
+    w = analysis_wamit.wave_forces(plota=1, dof_plot=dof_plot, inc_plot=inc_plot, multi_fig=True, T_lim=T_lim, param_out=p_out)
+
+if rao:
+    r = analysis_wamit.raos(plota=1, dof_plot=dof_plot, inc_plot=inc_plot, multi_fig=True, T_lim=T_lim, param_out=p_out)
+
+if drift:
     dof_aux=[]
     for dof in dof_plot:
         if dof != 3 and dof!=4 and dof!=5:
             dof_aux.append(dof)
     for dt in drift_analysis:
-        d = analysis_wamit.drift_forces(plota=1, drift_analysis_type=dt, dof_plot=dof_aux, inc_plot=inc_plot, multi_fig=True, T_lim=T_lim)
+        d = analysis_wamit.drift_forces(plota=1, drift_analysis_type=dt, dof_plot=dof_aux, inc_plot=inc_plot, multi_fig=True, T_lim=T_lim, param_out=p_out)
 
 if save_fig == True:
     for i in plt.get_fignums():

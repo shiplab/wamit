@@ -3,7 +3,9 @@ import analysis_wamit
 
 # Reading Output parameters
 
-[params,axis,vol,cb,cg,rest_coef,nome_out] = analysis_wamit.output_params()
+p_out = analysis_wamit.output_params()
+
+[params,axis,vol,cb,cg,rest_coef,nome_out] = p_out
 
 [g,ulen,rho,water_depth,water_depth_aux] = params
 [xbody,ybody,zbody,phibody] = axis
@@ -18,19 +20,19 @@ import analysis_wamit
 nomesDof = ['SURGE','SWAY','HEAVE','ROLL','PITCH','YAW']
     
 # Reading RAO
-[rao, rao_phase, per, inc, dof, arq4d, rao_c] = analysis_wamit.raos()
+[rao, rao_phase, per, inc, dof, arq4d, rao_c] = analysis_wamit.raos(param_out=p_out)
 
 # Reading Wave Forces
-[wforce, wforce_phase, arq2d] = analysis_wamit.wave_forces()
+[wforce, wforce_phase, arq2d] = analysis_wamit.wave_forces(param_out=p_out)
     
 # Reading Drift forces (Momentum)
-[wdforce, wdforce_phase, arq8d] = analysis_wamit.drift_forces_momentum()
+[wdforce, wdforce_phase, arq8d] = analysis_wamit.drift_forces(param_out=p_out)
 
 # Reading Added Mass and Potential Damping
-[added_mass, pot_damp, dof1, arq1d, added_mass_matrix, pot_damp_matrix] = analysis_wamit.added_mass_pot_damping()
-
+[added_mass, pot_damp, dof1, arq1d, added_mass_matrix, pot_damp_matrix] = analysis_wamit.added_mass_pot_damping(param_out=p_out)
+name_wnf = 'ship.wnf'
 # Write parameters in ship.wnf
-wnf = open('ship.wnf','w')
+wnf = open(name_wnf,'w')
 wnf.write('%OUT_FILE\n')
 wnf.write('"'+nome_out+'"\n\n')
 wnf.write('%NUMBER_OF_BODIES\n')
@@ -210,3 +212,6 @@ wnf.write('\n')
 wnf.write('%END\n')
 
 wnf.close()
+
+print('')
+print(' * Generated "' + name_wnf +'" file' )
