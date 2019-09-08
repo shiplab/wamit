@@ -70,11 +70,11 @@ class GDF:
             KVG[ii] = int(x[line])
             line+=1
             
-            NUA[ii] = NUG[ii] + 2*KUG[ii] - 1;
-            NVA[ii] = NVG[ii] + 2*KVG[ii] - 1;
-            Mu[ii] = NUG[ii] + KUG[ii] - 1;
-            Mv[ii] = NVG[ii] + KVG[ii] - 1;
-            NB[ii] = Mu[ii]*Mv[ii];
+            NUA[ii] = NUG[ii] + 2*KUG[ii] - 1
+            NVA[ii] = NVG[ii] + 2*KVG[ii] - 1
+            Mu[ii] = NUG[ii] + KUG[ii] - 1
+            Mv[ii] = NVG[ii] + KVG[ii] - 1
+            NB[ii] = Mu[ii]*Mv[ii]
             
             VKNTUG[ii] = []
             for j in range(int(NUA[ii])):
@@ -238,9 +238,9 @@ class GDF:
             Vx[ii] = np.sum(normais[ii][:,0]*centroide[ii][:,0]**2)/np.sum(normais[ii][:,0]*centroide[ii][:,0])/2
             Vy[ii] = np.sum(normais[ii][:,1]*centroide[ii][:,1]**2)/np.sum(normais[ii][:,0]*centroide[ii][:,0])/2
             Vz[ii] = np.sum(normais[ii][:,2]*centroide[ii][:,2]**2)/np.sum(normais[ii][:,0]*centroide[ii][:,0])/2
-            LCF[ii] = np.sum(normais[ii][:,2]*centroide[ii][:,0])/np.sum(normais[ii][:,2]);
-            BM[ii]  = -np.sum(normais[ii][:,2]*centroide[ii][:,1]**2)/np.sum(normais[ii][:,2]*centroide[ii][:,2]);
-            BMl[ii] = -np.sum(normais[ii][:,2]*centroide[ii][:,0]**2)/np.sum(normais[ii][:,2]*centroide[ii][:,2]);
+            LCF[ii] = np.sum(normais[ii][:,2]*centroide[ii][:,0])/np.sum(normais[ii][:,2])
+            BM[ii]  = -np.sum(normais[ii][:,2]*centroide[ii][:,1]**2)/np.sum(normais[ii][:,2]*centroide[ii][:,2])
+            BMl[ii] = -np.sum(normais[ii][:,2]*centroide[ii][:,0]**2)/np.sum(normais[ii][:,2]*centroide[ii][:,2])
             
         flag_irr =  abs(np.array(self.irr)-1)   
         

@@ -2,13 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 
-def plot_curves(tipo, arq_n_d, per, dof_plot, inc_plot, multi_fig=False):
+def plot_curves(tipo, arq_n_d, per, dof_plot, inc_plot, multi_fig=False, dt = 'm', T_lim = [0, 30]):
     cont = 0
     curve = []
     # ax = []
     #Visualization parameter
-    t_inf = 0
-    t_sup = 25
+    t_inf = T_lim[0]
+    t_sup = T_lim[1]
     #Name parameters
     names_dof = ['Surge', 'Sway', 'Heave',
                  'Roll', 'Pitch', 'Yaw']
@@ -27,7 +27,9 @@ def plot_curves(tipo, arq_n_d, per, dof_plot, inc_plot, multi_fig=False):
         col_inc=1
         col_dof=3
         col_plot=4
-        name = 'Mean drift forces'
+        name = 'Mean drift forces: '
+        pos_name = {'m': 'Momentum', 'p': 'Pressure', 'c': 'Control Surface'}
+        name = name + pos_name[dt]
         units_dof = ['[kN]', '[kN]', '[kN]',
                      '[kN.m]', '[kN.m]', '[kN.m]']
     elif tipo == 'wf':

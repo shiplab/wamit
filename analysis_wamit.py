@@ -122,7 +122,7 @@ def read_frc():
     
     return [mass,damp,rest_coef_ext]
 
-def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180],multi_fig=False):
+def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180],multi_fig=False, T_lim = [0, 25]):
     # from matplotlib.ticker import FormatStrFormatter
     # from scipy import interpolate
     param_out = output_params()
@@ -135,7 +135,7 @@ def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180],multi_fig=F
     # OPTN.4:    PER    BETA    I    Mod(ξi)    Pha(ξi)    Re(ξi)    Im(ξi)
 
     # Unique with no sort
-    per_a, idx = np.unique(arq4[:, 0], return_index=True)
+    _, idx = np.unique(arq4[:, 0], return_index=True)
     per = np.array([arq4[index, 0] for index in sorted(idx)])
 
     inc = np.unique(arq4[:, 1])
@@ -182,17 +182,17 @@ def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180],multi_fig=F
         
     # plots
     if plota==1:      
-        plot_curves('rao',arq4d,per,dof_plot,inc_plot,multi_fig)
+        plot_curves('rao',arq4d,per,dof_plot,inc_plot,multi_fig, T_lim=T_lim)
     
     return [rao, rao_phase, per, inc, dof, arq4d, rao_c]
 
 
-def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180],multi_fig=False):
+def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180],multi_fig=False, T_lim = [0, 25]):
     param_out = output_params()
     arq2 = np.loadtxt('force.3')
     ULEN = param_out[0][1]
     # Unique with no sort
-    per_a, idx = np.unique(arq2[:, 0], return_index=True)
+    _, idx = np.unique(arq2[:, 0], return_index=True)
     per = np.array([arq2[index, 0] for index in sorted(idx)])
 
     inc = np.unique(arq2[:, 1])
@@ -241,14 +241,19 @@ def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180],multi_
         
     # plots
     if plota==1:      
-        plot_curves('wf',arq2d,per,dof_plot,inc_plot,multi_fig)
+        plot_curves('wf',arq2d,per,dof_plot,inc_plot,multi_fig, T_lim=T_lim)
         
     return [wforce, wforce_phase, arq2d]
 
-def drift_forces_momentum(plota=0, dof_plot=[1,2,6], inc_plot=[0,45,90,135,180], multi_fig=False):
+def drift_forces(plota=0, drift_analysis_type = 'm', dof_plot=[1,2,6], inc_plot=[0,45,90,135,180], multi_fig=False, T_lim = [0, 25]):
+    
+    dt_arq_name = {'m': 'force.8', 'p': 'force.9', 'c': 'force.7'}
+    dt_message = {'m': 'Momentum', 'p': 'Pressure', 'c': 'Control Surface'}
+    arq_name = dt_arq_name[drift_analysis_type]
+    print(' * Drift Analysis: ' + dt_message[drift_analysis_type])
     
     param_out = output_params()
-    arq8 = np.loadtxt('force.8')
+    arq8 = np.loadtxt(arq_name)
     ULEN = param_out[0][1]
     
     # Unique with no sort
@@ -308,11 +313,11 @@ def drift_forces_momentum(plota=0, dof_plot=[1,2,6], inc_plot=[0,45,90,135,180],
         
     # plots
     if plota==1:      
-        plot_curves('mdf', arq8d, per, dof_plot, inc_plot, multi_fig)
+        plot_curves('mdf', arq8d, per, dof_plot, inc_plot, multi_fig, dt=drift_analysis_type, T_lim=T_lim)
     
     return [wdforce, wdforce_phase, arq8d]
 
-def added_mass_pot_damping(plota=0, dof_plot=[1,2,3,4,5,6], multi_fig=False):
+def added_mass_pot_damping(plota=0, dof_plot=[1,2,3,4,5,6], multi_fig=False, T_lim = [0, 25]):
     # ATENTION: FOR THE ADDED MASS AND POT DAMPING THERE IS NO INCLINATION, SO INC_PLOT
     arq1 = np.loadtxt('force.1')
     ULEN = read_ULEN()
@@ -388,8 +393,8 @@ def added_mass_pot_damping(plota=0, dof_plot=[1,2,3,4,5,6], multi_fig=False):
 
     # plots
     if plota==1:      
-        plot_curves('a', arq1d, per, dof_plot, [], multi_fig)
-        plot_curves('b', arq1d, per, dof_plot, [], multi_fig)
+        plot_curves('a', arq1d, per, dof_plot, [], multi_fig, T_lim=T_lim)
+        plot_curves('b', arq1d, per, dof_plot, [], multi_fig, T_lim=T_lim)
     
     return [added_mass, pot_damp, dof1, arq1d, added_mass_matrix, pot_damp_matrix]
 
