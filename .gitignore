@@ -3,4 +3,5 @@ __pycache__/*
 *.4
 .idea/*
 *.wnf
+*.old
 input_aw.txt

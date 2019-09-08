@@ -2,10 +2,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 
-def plot_curves(tipo, arq_n_d, per, dof_plot, inc_plot, multi_fig=False, dt = 'm', T_lim = [0, 30]):
-    cont = 0
-    curve = []
-    # ax = []
+def plot_curves(tipo, arq_n_d, per, dof_plot, inc_plot, NBODY=1, multi_fig=False, dt = 'm', T_lim = [0, 30], pos_per=[]):
+    
+    if np.array(pos_per).size == 0:
+        pos_per = (per/per)==1
+        
     #Visualization parameter
     t_inf = T_lim[0]
     t_sup = T_lim[1]
@@ -32,6 +33,8 @@ def plot_curves(tipo, arq_n_d, per, dof_plot, inc_plot, multi_fig=False, dt = 'm
         name = name + pos_name[dt]
         units_dof = ['[kN]', '[kN]', '[kN]',
                      '[kN.m]', '[kN.m]', '[kN.m]']
+        if dt == 'm':
+            NBODY=1 # Momentum analysis is for 1 body only
     elif tipo == 'wf':
         col_inc=1
         col_dof=2
@@ -62,51 +65,66 @@ def plot_curves(tipo, arq_n_d, per, dof_plot, inc_plot, multi_fig=False, dt = 'm
     else:
         n_col = 2
         n_lin = math.ceil(dof_plot_len/2)
-        
-    f1 = plt.figure(None, (5.7*n_col, 2.5*n_lin))
-    f1.canvas.set_window_title(name)
-    for ii in dof_plot:
-        aux = []
-        leg = []
-
-        if len(inc_plot) == 0:
-            it_aux = [ii]
-        else:
-            it_aux = inc_plot
-
-        for jj in it_aux:
-            aux.append(arq_n_d[(arq_n_d[:, col_dof] == ii) & (arq_n_d[:, col_inc] == jj), col_plot])
-            leg.append('Inc = ' + str(jj) + 'deg')
-
-        aux = np.array(aux)
-        curve.append(aux)
-        ax = plt.subplot(n_lin, n_col, cont+1)
-        plt.grid(axis='both')
-        idx = (per >= t_inf) & (per <= t_sup)
-
-        # Defines a deg-multiplier for plots that is necessary change units from rad to deg
-        if (ii == 4) | (ii == 5) | (ii == 6):
-            plt.plot(per, curve[cont].transpose() * deg_multiplier)
-            y_inf = curve[cont].min() * deg_multiplier
-            y_sup = curve[cont].max() * deg_multiplier
-        else:
-            plt.plot(per, curve[cont].transpose())
-            y_inf = curve[cont][:, idx].min()
-            y_sup = curve[cont][:, idx].max()
-        plt.xlim([t_inf, t_sup])
-
-        if y_inf != y_sup:
-            wd = .05*abs(y_sup - y_inf)
-            plt.ylim([y_inf-wd, y_sup+wd])
-
-        if cont == 0:
-            if len(inc_plot) > 0:
-                plt.legend(leg, loc='best')
-
-        plt.ylabel(names_dof[ii-1] + ' ' + units_dof[ii-1])
-        plt.xlabel('T [s]')
-        cont+=1
     
-    plt.tight_layout()
+    nfigs=1    
+    if NBODY>1:
+        nfigs = 2
+    
+    f=[None for _ in range(nfigs)]
+    for ff in range(nfigs):
+        f[ff] = plt.figure(None, (5.7*n_col, 2.5*n_lin))
+        f[ff].canvas.set_window_title(name + ' - NBODY: {:d}'.format(ff+1))
+        
+        dp = np.array(dof_plot)
+        dp = dp + ff*6
+        
+        cont = 0
+        curve = []
+        for ii in dp:
+            #print(ii)
+            aux = []
+            leg = []
+
+            if len(inc_plot) == 0:
+                it_aux = [ii]
+            else:
+                it_aux = inc_plot
+    
+            for jj in it_aux:
+                aux.append(arq_n_d[(arq_n_d[:, col_dof] == ii) & (arq_n_d[:, col_inc] == jj), col_plot])
+                leg.append('Inc = ' + str(jj) + 'deg')
+    
+            aux = np.array(aux)
+            curve.append(aux[:,pos_per])
+            plt.subplot(n_lin, n_col, cont+1)
+            plt.grid(axis='both')
+            idx = (per >= t_inf) & (per <= t_sup)
+    
+            # Defines a deg-multiplier for plots that is necessary change units from rad to deg
+            if (ii == 4) | (ii == 5) | (ii == 6) | (ii == 10) | (ii == 11) | (ii == 12):
+                plt.plot(per, curve[cont].transpose() * deg_multiplier)
+                y_inf = curve[cont][:, idx].min() * deg_multiplier
+                y_sup = curve[cont][:, idx].max() * deg_multiplier
+#                if ii==12:
+#                    print([y_sup, y_inf])      
+            else:
+                plt.plot(per, curve[cont].transpose())
+                y_inf = curve[cont][:, idx].min()
+                y_sup = curve[cont][:, idx].max()
+            plt.xlim([t_inf, t_sup])
+            
+            if y_inf != y_sup:    
+                wd = .05*abs(y_sup - y_inf)
+                plt.ylim([y_inf-wd, y_sup+wd])
+    
+            if cont == 0:
+                plt.legend(leg, loc='best')
+    
+            plt.ylabel(names_dof[(ii-1) % 6] + ' ' + units_dof[(ii-1) % 6])
+            plt.xlabel('T [s]')
+            cont+=1
+    
+        plt.tight_layout()
+
     if multi_fig == False:
         plt.show()
