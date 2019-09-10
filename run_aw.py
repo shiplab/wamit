@@ -43,4 +43,5 @@ if save_fig == True:
         name = name.replace(':','')
         plt.savefig('fig_' + name + '.svg')
 
-plt.show()
+if show_fig:
+    plt.show()

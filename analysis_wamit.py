@@ -22,19 +22,19 @@ def verify_NBODY():
     arq_out_aux.close()
     padrao = "[+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?"
     
-    stop=False
     NBODY_Test = []
     NBODY = 1
     
     for x in arq_out: 
         if ('Body number: N='  in x)==True:
             aux = re.findall(padrao,x)
-#            print(int(aux[0]))
+            #print(int(aux[0]))
             NBODY_Test.append(int(aux[0]))
-            print('Achou N = {:d}'.format(int(aux[0])))
+            #print('Achou N = {:d}'.format(int(aux[0])))
     
     if len(NBODY_Test) > 0:
-        NBODY = max(NBODY_Test)   
+        NBODY = max(NBODY_Test)
+    print('')       
     print('NBODY={:d}'.format(NBODY))
     return NBODY
     
@@ -122,8 +122,9 @@ def output_params():
                 GMt.append((C[ii][i,i]+Cext[ii][i,i])/(Mass[ii]*g)) 
             elif i == 4:
                 GMl.append((C[ii][i,i]+Cext[ii][i,i])/(Mass[ii]*g))    
-        
+    print('')     
     print('** WAMIT OUTPUT PARAMETERS - HYDROSCRIPTS **')
+    print('') 
     print('g = {:.2f} m/s^2'.format(g))
     print('ULEN = {:.2f}'.format(ulen))
     if water_depth_aux == 1:

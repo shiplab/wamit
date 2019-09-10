@@ -18,8 +18,9 @@ rao = True
 drift = True
 drift_analysis = ['m'] # 'm' - momentum, 'p' - pressure, 'c' - control surface
 
-# Save Figures
-save_fig = False
+# Figures
+save_fig = True
+show_fig = False
 '''
 input.write(s)
 
