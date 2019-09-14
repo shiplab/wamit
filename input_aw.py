@@ -18,6 +18,9 @@ rao = True
 drift = True
 drift_analysis = ['m'] # 'm' - momentum, 'p' - pressure, 'c' - control surface
 
+# WNF Mean Drift
+wnf_drift = ['m']
+
 # Figures
 save_fig = True
 show_fig = False

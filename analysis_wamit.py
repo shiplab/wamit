@@ -263,7 +263,7 @@ def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180], multi_fig=
         plot_curves('rao', arq_n_d=arq4d, per=per, dof_plot=dof_plot, inc_plot=inc_plot, NBODY=NBODY,multi_fig=multi_fig, T_lim=T_lim)
 
     print('')
-    print(' * Response Ampitude Operator')
+    print(' * Response Amplitude Operator')
 
     return [rao, rao_phase, per, inc, dof, arq4d, rao_c]
 
@@ -273,7 +273,7 @@ def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180],multi_
     if not param_out:
         param_out = output_params()
 
-    arq2 = np.loadtxt('force.3')
+    arq2 = np.loadtxt('force.2')
     ULEN = param_out[0][1]
     NBODY = param_out[0][5]
     # Unique with no sort
@@ -386,7 +386,12 @@ def drift_forces(plota=0, drift_analysis_type = 'm', dof_plot=[1,2,6], inc_plot=
     
     wdforce = []
     wdforce_phase = []
-    dof = [1,2,3,4,5,6]
+    new_dof = []
+    for d in dof:
+        if d > 0 :
+            new_dof.append(d)
+    
+    dof = new_dof
     for ii in dof:#[dof[i] for i in [0,1,5]]:
         aux = []
         aux2 = []
@@ -416,7 +421,7 @@ def added_mass_pot_damping(plota=0, dof_plot=[1,2,3,4,5,6], multi_fig=False, T_l
     NBODY = param_out[0][5]
     arq1 = np.loadtxt('force.1')
     
-#    print('added_mass_pot_damping: ULEN = {:.1f}'.format(ULEN))
+    # print('added_mass_pot_damping: ULEN = {:.1f}'.format(ULEN))
     # Unique with no sort
     _, idx = np.unique(arq1[:, 0], return_index=True)
     per = np.array([arq1[index, 0] for index in sorted(idx)])
@@ -426,7 +431,7 @@ def added_mass_pot_damping(plota=0, dof_plot=[1,2,3,4,5,6], multi_fig=False, T_l
     dof_aux = [1,2,3]
     aux1 = []
     for n in range(NBODY-1):
-        print(n)
+        #print(n)
         for z in dof_aux:
             aux1.append(z+6*(n+1))
     
