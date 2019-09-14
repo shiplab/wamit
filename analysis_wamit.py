@@ -14,6 +14,29 @@ def read_ULEN():
         if ('Gravity:' in x)==True:
             [g,ulen] = [float(i) for i in re.findall(padrao,x)]
     return ulen
+
+def verify_NBODY():
+    nome_out = 'force.out'
+    arq_out_aux = open(nome_out,'r')
+    arq_out = arq_out_aux.readlines()
+    arq_out_aux.close()
+    padrao = "[+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?"
+    
+    NBODY_Test = []
+    NBODY = 1
+    
+    for x in arq_out: 
+        if ('Body number: N='  in x)==True:
+            aux = re.findall(padrao,x)
+            #print(int(aux[0]))
+            NBODY_Test.append(int(aux[0]))
+            #print('Achou N = {:d}'.format(int(aux[0])))
+    
+    if len(NBODY_Test) > 0:
+        NBODY = max(NBODY_Test)
+    print('')       
+    print('NBODY={:d}'.format(NBODY))
+    return NBODY
     
 def output_params(): 
     # Reading running output parameters
@@ -22,7 +45,15 @@ def output_params():
     arq_out = arq_out_aux.readlines()
     arq_out_aux.close()
     padrao = "[+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?"
-        
+    
+    NBODY = verify_NBODY()
+    
+    params_aux = []
+    axis = []
+    vol = []
+    cb = []
+    cg = []
+    rest_coef = []           
     for x in arq_out:   
         if ('Gravity:' in x)==True:
             [g,ulen] = [float(i) for i in re.findall(padrao,x)]
@@ -34,102 +65,137 @@ def output_params():
             else:
                 [water_depth,rho] = [float(i) for i in re.findall(padrao,x)]
                 water_depth_aux=0
+            params_aux.append([g, ulen, rho, water_depth, water_depth_aux, NBODY])
         if ('XBODY =' in x)==True:
             [xbody,ybody,zbody,phibody] = [float(i) for i in re.findall(padrao,x)]
+            axis.append([xbody,ybody,zbody,phibody])
         if ('Volumes (VOLX,VOLY,VOLZ):' in x)==True:
             [xvol,yvol,zvol] = [float(i) for i in re.findall(padrao,x)]
+            vol.append([xvol,yvol,zvol])
         if ('Center of Buoyancy (Xb,Yb,Zb):' in x)==True:
             [xb,yb,zb] = [float(i) for i in re.findall(padrao,x)]
+            cb.append([xb,yb,zb])
         if ('C(3,3),C(3,4),C(3,5):' in x)==True:
             [_,_,_,_,_,_,c33,c34,c35] = [float(i) for i in re.findall(padrao,x)]
         if ('C(4,4),C(4,5),C(4,6):' in x)==True:
             [_,_,_,_,_,_,c44,c45,c46] = [float(i) for i in re.findall(padrao,x)]
         if ('C(5,5),C(5,6):' in x)==True:
             [_,_,_,_,c55,c56] = [float(i) for i in re.findall(padrao,x)]
+            rest_coef.append([c33*g*rho*(ulen**2),c34*g*rho*(ulen**3),c35*g*rho*(ulen**3),
+                              c44*g*rho*(ulen**4),c45*g*rho*(ulen**4),c46*g*rho*(ulen**4),
+                              c55*g*rho*(ulen**4),c56*g*rho*(ulen**4)])
         if ('Center of Gravity  (Xg,Yg,Zg):' in x)==True:
             [xg,yg,zg] = [float(i) for i in re.findall(padrao,x)]
+            cg.append([xg,yg,zg])
                      
-    params = [g,ulen,rho,water_depth,water_depth_aux]
-    axis = [xbody,ybody,zbody,phibody]
-    vol = [xvol,yvol,zvol]
-    cb = [xb,yb,zb]
-    cg = [xg,yg,zg]
-    rest_coef = [c33*g*rho*(ulen**2),c34*g*rho*(ulen**3),c35*g*rho*(ulen**3),c44*g*rho*(ulen**4),c45*g*rho*(ulen**4),c46*g*rho*(ulen**4),c55*g*rho*(ulen**4),c56*g*rho*(ulen**4)]
+    params = params_aux[0]
+    axis = axis[0:NBODY]
+    vol = vol[0:NBODY]
+    cb = cb[0:NBODY]
+    cg = cg[0:NBODY]
+    rest_coef = rest_coef[0:NBODY]
     
     dof_rest_coef =[[3,3],[3,4],[3,5],[4,4],[4,5],[4,6],[5,5],[5,6]]
-    
-    C = np.zeros((6,6))
-    cont=0
-    for x in dof_rest_coef:
-        C[x[0]-1,x[1]-1] = rest_coef[cont]
-        cont+=1
-        
-    mad = added_mass_pot_damping()
-    mad = mad[4]
-    
+
+
     frc_out = read_frc() #substitute by read_mmx after
-    M = frc_out[0]
-    Mass = M[0,0]
-    Cext = frc_out[2]
-    
-    for i in [3,4]:
-        if i == 3:
-            GMt = (C[i,i]+Cext[i,i])/(Mass*g)
-        elif i == 4:
-            GMl = (C[i,i]+Cext[i,i])/(Mass*g)        
+    C=[]
+    Cext=[]
+    M=[]
+    Mass=[]
+    GMt=[]
+    GMl=[]
+    for ii in range(NBODY):
+        C.append(np.zeros((6,6)))
+        cont=0
+        for x in dof_rest_coef:
+            C[ii][x[0]-1,x[1]-1] = rest_coef[ii][cont]
+            cont+=1
         
+        M.append(frc_out[0][ii])
+    
+        Mass.append(M[ii][0,0])
+        Cext.append(frc_out[2][ii])
+    
+        for i in [3,4]:
+            if i == 3:
+                GMt.append((C[ii][i,i]+Cext[ii][i,i])/(Mass[ii]*g)) 
+            elif i == 4:
+                GMl.append((C[ii][i,i]+Cext[ii][i,i])/(Mass[ii]*g))    
+    print('')     
     print('** WAMIT OUTPUT PARAMETERS - HYDROSCRIPTS **')
+    print('') 
     print('g = {:.2f} m/s^2'.format(g))
     print('ULEN = {:.2f}'.format(ulen))
     if water_depth_aux == 1:
         print('Water Depth = ' + water_depth)
     else:
         print('Water Depth = {:.2f} m'.format(water_depth))
-    print('Vols = ' + '[' + ', '.join(["{:.2f}".format(v) for v in vol]) + '] m^3')
-    print('Mass = {:.2f} t'.format(Mass))
-    print('CoB = ' + '[' + ', '.join(["{:.2f}".format(v) for v in cb]) + '] m')
-    print('CoG = ' + '[' + ', '.join(["{:.2f}".format(v) for v in cg]) + '] m')
-    print('Wamit Axis = ' + '[' + ', '.join(["{:.2f}".format(v) for v in axis]) + '] m')      
-    print('GMt = {:.2f} m'.format(GMt))
-    print('GMl = {:.2f} m'.format(GMl))
-    print(' ')
+    for ii in range(NBODY):
+        print('Body N = {:d}'.format(ii+1))
+        print('  Vols = ' + '[' + ', '.join(["{:.2f}".format(v) for v in vol[ii]]) + '] m^3')
+        print('  Mass = {:.2f} t'.format(Mass[ii]))
+        print('  CoB = ' + '[' + ', '.join(["{:.2f}".format(v) for v in cb[ii]]) + '] m')
+        print('  CoG = ' + '[' + ', '.join(["{:.2f}".format(v) for v in cg[ii]]) + '] m')
+        print('  Wamit Axis = ' + '[' + ', '.join(["{:.2f}".format(v) for v in axis[ii]]) + '] m')      
+        print('  GMt = {:.2f} m'.format(GMt[ii]))
+        print('  GMl = {:.2f} m'.format(GMl[ii]))
     
     return [params,axis,vol,cb,cg,rest_coef,nome_out]
     
 def read_frc():
-    padrao = "[+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?"
-    # Reading Force file
-    nome_frc = 'ship.frc'
-    arq_frc_aux = open(nome_frc,'r')
-    arq_frc = arq_frc_aux.readlines()
+    # Read main file FRC to search for FRC files names
+    name_main_frc = 'force.frc'
+    arq_frc_aux = open(name_main_frc,'r')
+    arq_main_frc = arq_frc_aux.readlines()
     arq_frc_aux.close()
     
+    nome_main_frc=[]
+    for x in arq_main_frc[1:]:
+        if '.frc' in x:
+            pos=x.find('.frc')+4
+            nome_main_frc.append(x[0:pos])
+    
     mass=[]
-    for x in arq_frc[5:11]:
-        mass.append([float(i) for i in re.findall(padrao,x)])
-        
     damp=[]
-    for x in arq_frc[12:12+6]:
-        damp.append([float(i) for i in re.findall(padrao,x)])
-
     rest_coef_ext=[]
-    for x in arq_frc[12+7:12+7+6]:
-        rest_coef_ext.append([float(i) for i in re.findall(padrao,x)])
+            
+    for ii in range(len(nome_main_frc)):
+        padrao = "[+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?"
+        # Reading Force file
+        nome_frc = nome_main_frc[ii]
+        arq_frc_aux = open(nome_frc,'r')
+        arq_frc = arq_frc_aux.readlines()
+        arq_frc_aux.close()
         
-    mass = np.array(mass)
-    damp = np.array(damp)
-    rest_coef_ext = np.array(rest_coef_ext)
+        mass.append([])
+        for x in arq_frc[5:11]:
+            mass[ii].append([float(i) for i in re.findall(padrao,x)])
+            
+        damp.append([])
+        for x in arq_frc[12:12+6]:
+            damp[ii].append([float(i) for i in re.findall(padrao,x)])
+    
+        rest_coef_ext.append([])
+        for x in arq_frc[12+7:12+7+6]:
+            rest_coef_ext[ii].append([float(i) for i in re.findall(padrao,x)])
+            
+        mass[ii] = np.array(mass[ii])
+        damp[ii] = np.array(damp[ii])
+        rest_coef_ext[ii] = np.array(rest_coef_ext[ii])
     
     return [mass,damp,rest_coef_ext]
 
-def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180],multi_fig=False, T_lim = [0, 25]):
+def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180], multi_fig=False, T_lim = [0, 25], param_out=[]):
     # from matplotlib.ticker import FormatStrFormatter
     # from scipy import interpolate
-    param_out = output_params()
+    if not param_out:
+        param_out = output_params()
+
     # Inputs (after must be imported from a configuration file)
     arq4 = np.loadtxt('force.4')
     ULEN = param_out[0][1]
-    NBODY = 1   # implement function to read the number of bodies
+    NBODY = param_out[0][5]
     
     # Column:  0-Period, 1-Incidence angle, 2-DOF, 3-Amp, 4-Phase, 5-Real, 6-Imag.
     # OPTN.4:    PER    BETA    I    Mod(ξi)    Pha(ξi)    Re(ξi)    Im(ξi)
@@ -137,6 +203,18 @@ def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180],multi_fig=F
     # Unique with no sort
     _, idx = np.unique(arq4[:, 0], return_index=True)
     per = np.array([arq4[index, 0] for index in sorted(idx)])
+    
+#    # identify period to remove from analysis
+    # pos_per=[]
+    # if np.array(remove_per).size > 0:
+    #     print('Removendo períodos:')
+    #     print(remove_per)
+    #     delta_p = .1
+    #     for p in remove_per:
+    #         pos_per.append(np.logical_not(np.logical_and(per > (p-delta_p), per < (p+delta_p))))
+            
+    #     pos_per = np.prod(np.array(pos_per),0)==1
+    #     per = per[pos_per]
 
     inc = np.unique(arq4[:, 1])
     dof = np.unique(arq4[:, 2])
@@ -182,15 +260,22 @@ def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180],multi_fig=F
         
     # plots
     if plota==1:      
-        plot_curves('rao',arq4d,per,dof_plot,inc_plot,multi_fig, T_lim=T_lim)
-    
+        plot_curves('rao', arq_n_d=arq4d, per=per, dof_plot=dof_plot, inc_plot=inc_plot, NBODY=NBODY,multi_fig=multi_fig, T_lim=T_lim)
+
+    print('')
+    print(' * Response Amplitude Operator')
+
     return [rao, rao_phase, per, inc, dof, arq4d, rao_c]
 
 
-def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180],multi_fig=False, T_lim = [0, 25]):
-    param_out = output_params()
-    arq2 = np.loadtxt('force.3')
+def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180],multi_fig=False, T_lim = [0, 25], param_out=[]):
+
+    if not param_out:
+        param_out = output_params()
+
+    arq2 = np.loadtxt('force.2')
     ULEN = param_out[0][1]
+    NBODY = param_out[0][5]
     # Unique with no sort
     _, idx = np.unique(arq2[:, 0], return_index=True)
     per = np.array([arq2[index, 0] for index in sorted(idx)])
@@ -241,23 +326,28 @@ def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180],multi_
         
     # plots
     if plota==1:      
-        plot_curves('wf',arq2d,per,dof_plot,inc_plot,multi_fig, T_lim=T_lim)
-        
+        plot_curves(tipo='wf', arq_n_d=arq2d, per=per, dof_plot=dof_plot, inc_plot=inc_plot, NBODY=NBODY, multi_fig=multi_fig, T_lim=T_lim)
+
+    print('')
+    print(' * Wave forces')  
     return [wforce, wforce_phase, arq2d]
 
-def drift_forces(plota=0, drift_analysis_type = 'm', dof_plot=[1,2,6], inc_plot=[0,45,90,135,180], multi_fig=False, T_lim = [0, 25]):
+def drift_forces(plota=0, drift_analysis_type = 'm', dof_plot=[1,2,6], inc_plot=[0,45,90,135,180], multi_fig=False, T_lim = [0, 25], param_out=[]):
     
     dt_arq_name = {'m': 'force.8', 'p': 'force.9', 'c': 'force.7'}
     dt_message = {'m': 'Momentum', 'p': 'Pressure', 'c': 'Control Surface'}
     arq_name = dt_arq_name[drift_analysis_type]
+    print('')  
     print(' * Drift Analysis: ' + dt_message[drift_analysis_type])
     
-    param_out = output_params()
+    if not param_out:
+        param_out = output_params()
+
     arq8 = np.loadtxt(arq_name)
     ULEN = param_out[0][1]
-    
+    NBODY = param_out[0][5]
     # Unique with no sort
-    per_a, idx = np.unique(arq8[:, 0], return_index=True)
+    _, idx = np.unique(arq8[:, 0], return_index=True)
     per = np.array([arq8[index, 0] for index in sorted(idx)])
 
     inc = np.unique(arq8[:, 1])
@@ -296,7 +386,12 @@ def drift_forces(plota=0, drift_analysis_type = 'm', dof_plot=[1,2,6], inc_plot=
     
     wdforce = []
     wdforce_phase = []
-    dof = [1,2,3,4,5,6]
+    new_dof = []
+    for d in dof:
+        if d > 0 :
+            new_dof.append(d)
+    
+    dof = new_dof
     for ii in dof:#[dof[i] for i in [0,1,5]]:
         aux = []
         aux2 = []
@@ -313,32 +408,45 @@ def drift_forces(plota=0, drift_analysis_type = 'm', dof_plot=[1,2,6], inc_plot=
         
     # plots
     if plota==1:      
-        plot_curves('mdf', arq8d, per, dof_plot, inc_plot, multi_fig, dt=drift_analysis_type, T_lim=T_lim)
+        plot_curves(tipo='mdf', arq_n_d=arq8d, per=per, dof_plot=dof_plot, inc_plot=inc_plot, NBODY=NBODY, multi_fig=multi_fig, dt=drift_analysis_type, T_lim=T_lim)
     
     return [wdforce, wdforce_phase, arq8d]
 
-def added_mass_pot_damping(plota=0, dof_plot=[1,2,3,4,5,6], multi_fig=False, T_lim = [0, 25]):
-    # ATENTION: FOR THE ADDED MASS AND POT DAMPING THERE IS NO INCLINATION, SO INC_PLOT
+def added_mass_pot_damping(plota=0, dof_plot=[1,2,3,4,5,6], multi_fig=False, T_lim = [0, 25], param_out=[]):
+    
+    if not param_out:
+        param_out = output_params()
+
+    ULEN = param_out[0][1]
+    NBODY = param_out[0][5]
     arq1 = np.loadtxt('force.1')
-    ULEN = read_ULEN()
-#    print('added_mass_pot_damping: ULEN = {:.1f}'.format(ULEN))
+    
+    # print('added_mass_pot_damping: ULEN = {:.1f}'.format(ULEN))
     # Unique with no sort
     _, idx = np.unique(arq1[:, 0], return_index=True)
     per = np.array([arq1[index, 0] for index in sorted(idx)])
+    # searching the evaluated dof's
+    dof = arq1[arq1[:,0]==per[0],1:3]
     
-    dim = np.ones(arq1.shape)
+    dof_aux = [1,2,3]
+    aux1 = []
+    for n in range(NBODY-1):
+        #print(n)
+        for z in dof_aux:
+            aux1.append(z+6*(n+1))
     
+    [dof_aux.append(n) for n in aux1]
+    
+    #dim = np.ones(arq1.shape)
     dim = []
-    
     for ii in arq1:
         if ii[1]==ii[2]:
-            if ii[1]==1 or ii[1]==2 or ii[1]==3:
+            if ii[1] in dof_aux:
                 k=3
             else:
                 k=4
         else:
             k=5
-   
         dim.append([1,1,1,1.025*(ULEN**k),(2*np.pi/ii[0])*1.025*(ULEN**k)])
         
     arq1d = arq1*dim
@@ -352,7 +460,9 @@ def added_mass_pot_damping(plota=0, dof_plot=[1,2,3,4,5,6], multi_fig=False, T_l
     # Added Mass
     # 
     # Plane motion ->  lower frequency
+    # - At least 1 dof is surge, sway or yaw. Ex: [1,1],[1,3]
     # Out-plane motion -> mean between the mean and the max added mass
+    # - Both dof are out-plane. Ex: [3,3], [3,4]
     
     aux_mad_matrix = []
     aux_pdamp_matrix = []
@@ -375,8 +485,8 @@ def added_mass_pot_damping(plota=0, dof_plot=[1,2,3,4,5,6], multi_fig=False, T_l
     
     aux_mad_matrix = np.array(aux_mad_matrix)
     aux_pdamp_matrix = np.array(aux_pdamp_matrix)
-    added_mass_matrix = np.zeros((6,6))
-    pot_damp_matrix = np.zeros((6,6))
+    added_mass_matrix = np.zeros((6*NBODY, 6*NBODY))
+    pot_damp_matrix = np.zeros((6*NBODY, 6*NBODY))
     
     cont = 0
     for x in dof1:
@@ -393,9 +503,11 @@ def added_mass_pot_damping(plota=0, dof_plot=[1,2,3,4,5,6], multi_fig=False, T_l
 
     # plots
     if plota==1:      
-        plot_curves('a', arq1d, per, dof_plot, [], multi_fig, T_lim=T_lim)
-        plot_curves('b', arq1d, per, dof_plot, [], multi_fig, T_lim=T_lim)
+        plot_curves('a', arq1d, per, dof_plot, [], NBODY=NBODY, multi_fig=multi_fig, T_lim=T_lim)
+        plot_curves('b', arq1d, per, dof_plot, [], NBODY=NBODY,multi_fig=multi_fig, T_lim=T_lim)
     
+    print('')
+    print(' * Added Mass and Potential Damping')
     return [added_mass, pot_damp, dof1, arq1d, added_mass_matrix, pot_damp_matrix]
 
 def point_rao(points):
@@ -423,8 +535,11 @@ def point_rao(points):
     return [rao_p_i, rao_p_j, rao_p_k]
 
 #debuggers
+#op = output_params()
+#raos(1,remove_per=[18,19.3])
 #raos(1)
 #wave_forces(1,[1],[0])
 #drift_forces_momentum(1)
 #added_mass_pot_damping(plota=0)
 #point_rao([[100, 20, 30], [-100, 10, 0]])
+#verify_NBODY()

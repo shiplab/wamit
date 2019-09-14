@@ -26,15 +26,15 @@ class GDF:
         fileID = open(self.file_name)
         arqGDF=fileID.readlines()
         fileID.close()   
-        #standard for reading numbers
+        # standard for reading numbers
         padrao = "[+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?"        
-        #Line 1 -> Head
-        #Line 2 -> ULEN e g
-        [ulen,g] = [float(i) for i in re.findall(padrao,arqGDF[1])]
+        # Line 1 -> Head
+        # Line 2 -> ULEN e g
+        [ulen, g] = [float(i) for i in re.findall(padrao, arqGDF[1])]
         #Line 3 -> Ix e Iy
-        [Isx,Isy] = [int(i) for i in re.findall(padrao,arqGDF[2])]
+        [Isx, Isy] = [int(i) for i in re.findall(padrao, arqGDF[2])]
         #Line 4 -> Npatch e IGDEF
-        [Npatch,IGDEF] = [int(i) for i in re.findall(padrao,arqGDF[3])]
+        [Npatch, IGDEF] = [int(i) for i in re.findall(padrao, arqGDF[3])]
         # reading numbers
         x = []
         
@@ -197,7 +197,7 @@ class GDF:
             surf[ii].tessellate()
             
             vertices[ii] = [list(surf[ii].tessellator.vertices[i].data) for i in range(len(surf[ii].tessellator.vertices))]
-            faces[ii] = [list(surf[ii].tessellator.triangles[i].vertex_ids_zero) for i in range(len(surf[ii].tessellator.triangles))]
+            faces[ii] = [list(surf[ii].tessellator.faces[i].data) for i in range(len(surf[ii].tessellator.faces))]
             
             ##### IMPLEMENT FUNCTION THAT REDEFINS VERTICES AND FACES BASED ON THE draft
             # move keel to Z=0
@@ -399,9 +399,9 @@ vertices = painel.properties.vertices[id_plot]
 for fc in painel.properties.faces[id_plot]:
     x = [vertices[fc[0]][0], vertices[fc[1]][0], vertices[fc[2]][0], vertices[fc[0]][0]]
     y = [vertices[fc[0]][1], vertices[fc[1]][1], vertices[fc[2]][1], vertices[fc[0]][1]]
-    plt.plot(x,y,'-b')
+    plt.plot(x, y, '-b')
 
 for ct in painel.properties.centroide[id_plot]:
-    plt.plot(ct[0],ct[1],'x')
-#    
-#plt.show()
+    plt.plot(ct[0], ct[1], 'x')
+
+plt.show()

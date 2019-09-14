@@ -13,12 +13,17 @@ T_lim = [0,30]
 
 # Desired Analysis
 added_mass = True
+wave_forces = True
 rao = True
 drift = True
 drift_analysis = ['m'] # 'm' - momentum, 'p' - pressure, 'c' - control surface
 
-# Save Figures
-save_fig = False
+# WNF Mean Drift
+wnf_drift = ['m']
+
+# Figures
+save_fig = True
+show_fig = False
 '''
 input.write(s)
 
