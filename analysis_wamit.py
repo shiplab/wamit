@@ -352,6 +352,7 @@ def drift_forces(plota=0, drift_analysis_type = 'm', dof_plot=[1,2,6], inc_plot=
 
     inc = np.unique(arq8[:, 1])
     dof = np.unique(arq8[:, 3])
+    dof = dof[dof>0]
 
     dim = np.ones(arq8.shape)
 
@@ -386,22 +387,18 @@ def drift_forces(plota=0, drift_analysis_type = 'm', dof_plot=[1,2,6], inc_plot=
     
     wdforce = []
     wdforce_phase = []
-    new_dof = []
-    for d in dof:
-        if d > 0 :
-            new_dof.append(d)
+    new_dof = np.arange(1, dof.max()+1)
     
-    dof = new_dof
-    for ii in dof:#[dof[i] for i in [0,1,5]]:
+    for ii in new_dof:
         aux = []
         aux2 = []
         for jj in per:
-            if ii==3 or ii==4 or ii==5:
-                aux.append(np.zeros(len(inc)))
-                aux2.append(np.zeros(len(inc)))
-            else:
+            if np.isin(ii,dof):
                 aux.append(arq8d[(arq8d[:, 3] == ii) & (arq8d[:, 0] == jj), 4])
                 aux2.append(arq8d[(arq8d[:, 3] == ii) & (arq8d[:, 0] == jj), 5])
+            else:
+                aux.append(np.zeros(len(inc)))
+                aux2.append(np.zeros(len(inc)))
                 
         wdforce.append(aux)
         wdforce_phase.append(aux2)

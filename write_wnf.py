@@ -35,8 +35,6 @@ p_out = analysis_wamit.output_params()
 # Reading Drift forces ('m' - Momentum, 'p' - Pressure, 'c' - control surface)
 
 
-
-
 [wdforce, wdforce_phase, arq8d] = analysis_wamit.drift_forces(drift_analysis_type = dt, param_out=p_out)
 
 # Reading Added Mass and Potential Damping
