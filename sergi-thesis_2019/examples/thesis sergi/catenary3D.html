@@ -1,0 +1,324 @@
+<html>
+	<script src="../libs/plotly.min.js"></script>
+	<script src="../libs/three.js"></script>
+	<script src="../libs/STLLoader.js"></script>
+	<script src="../libs/OrbitControls.js"></script>
+	<script src="../libs/browse_files_Elias_Hasle.js"></script>
+	<script src="../snippets/Patch_interpolation.js"></script>
+
+<head>
+
+<body>
+
+	
+	
+<div id="firstDivistion" class="division">
+	<h1>Calculate catenary</h1>
+	
+	<table style="width:100%">
+  <tr>
+  </tr>
+  <tr>
+    <td>
+	  
+<h3>Point A</h3>
+<p>X position: <input type="text" id="xA_pos" name="" value="0" size="2" oninput="update()"> m <br>
+<input type="range" id= "label_xA" min=-50 value=0 max=50 step=1 oninput="update()"></p>
+    
+<p>Y position: <input type="text" id="yA_pos" name="" value="0" size="2" oninput="update()"> m <br>
+<input type="range" id= "label_yA" min=-50 value=0 max=50 step=1 oninput="update()"></p>
+	
+<p>Z position: <input type="text" id="zA_pos" name="" value="0" size="2" oninput="update()"> m <br>
+<input type="range" id= "label_zA" min=-50 value=0 max=50 step=1 oninput="update()"></p>
+	  </td>
+    <td>
+	  <h3>Cable properties</h3>
+<p>Cable length: <input type="text" id="weight" name="" value="0" size="2" oninput="update()"> m <br>
+<input type="range" id= "label_w" min=0 value=50 max=150 step=1 oninput="update()"></p>
+	
+<p>Density: <input type="text" id="density" name="" value="0" size="2" oninput="update()"> kg/m <br>
+<input type="range" id= "label_d" min=0 value=30 max=100 step=1 oninput="update()"></p>	
+	  </td> 
+  </tr>
+  <tr>
+    <td>  
+<h3>Point B</h3>
+
+<p>X position: <input type="text" id="xB_pos" name="" value="0" size="2" oninput="update()"> m <br>
+<input type="range" id= "label_xB" min=-50 value=30 max=50 step=1 oninput="update()"></p>
+	
+<p>Y position: <input type="text" id="yB_pos" name="" value="0" size="2" oninput="update()"> m <br>
+<input type="range" id= "label_yB" min=-50 value=30 max=50 step=1 oninput="update()"></p>
+
+<p>Z position: <input type="text" id="zB_pos" name="" value="0" size="2" oninput="update()"> m <br>
+<input type="range" id= "label_zB" min=-50 value=5 max=50 step=1 oninput="update()"></p>	  
+	  </td>
+	  <td><h2>Tension on the catenary</h2>    
+<p>Tension in A: = </button><span id='tension_A'></span> N</p>
+	<p>Tension in B: = </button><span id='tension_B'></span> N</p></td>
+  </tr>
+</table>
+
+
+
+	
+
+
+<div  style="width: 170px; position:absolute;right:700px;top:140px;overflow:auto; padding:20px;">	</div>
+	
+	
+	
+	
+	
+	
+	</div>
+<div id="3d" class="division"></div>
+
+<style>
+	.division{
+  width:50%;
+  height:100%;
+  float:left;
+}
+	</style>
+
+	
+<script>
+
+var renderer, camera, controls, gui, stats;
+var scene, zUpCont, playback, bodies, ocean;	
+
+//Ready renderer and scene
+    (function (){
+        renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setClearColor(0xA9CCE3, 1);
+
+        // get the div that will hold the renderer
+        var container = document.getElementById('3d');
+        // add the renderer to the div
+        container.appendChild(renderer.domElement);
+
+        scene = new THREE.Scene();
+
+        //Camera and controls:
+        camera = new THREE.PerspectiveCamera(35);
+        camera.up.set(0,0,1);
+        scene.add(camera);
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+        //Respond to window resize:
+        function onResize() {
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+        }
+        window.addEventListener("resize", onResize);
+        onResize(); //Ensure the initial setup is good too
+
+        //Add lights:
+        scene.add(new THREE.AmbientLight(0xffffff,0.3));
+        scene.add(function() {
+            let sun = new THREE.DirectionalLight(0xffffff,1);
+            sun.position.set(1,1,1);
+            return sun;
+        }());
+    })();
+    
+    
+	
+var x1 = 0
+var y1 = 0
+var z1 = 0
+var x2 = 30
+var y2 = 30
+var z2 = 5
+var s = 50 //Length of the cable --> Must be greater than length between suports L
+var w = 21 // Unit Weight of the cable - kg/m
+var x0, z0=0;
+var a = 1
+var diff = 10;
+var lineLength
+
+var material = new THREE.LineBasicMaterial({
+                color: 0xff0000,
+                linewidth: 2
+            });
+
+var geometry = new THREE.Geometry();
+
+            for (var j = 0; j < 99; j++) {
+                geometry.vertices.push(new THREE.Vector3(0,0,0));
+        }
+
+var LineGeometry = new THREE.Line(geometry, material);
+scene.add(LineGeometry);
+
+	
+       //HTML get position and plot results
+        function update(){
+	
+A = {x:x1, y:y1, z:z1}
+B = {x:x2, y:y2, z:z2}
+C = {x:x0, y:a, z:z0}
+	
+xm = (A.x + B.x)/2
+Ax = (B.x - A.x)/2
+	
+while (diff>0.5){
+	C.x = -(((Math.asinh(((B.y - A.y)/a)/(2*Math.sinh(Ax/a))))*a)-xm)
+	s0 = (B.y - A.y)/(Math.tanh((xm-C.x)/a))
+	if (s0-s > 0){
+		diff = s0-s
+	}else{
+		diff = s-s0
+	}
+	a = a + 0.1
+
+}
+
+var L = (B.x - A.x)// HORIZONTAL DISTANCE BETWEEN SUPPORTS	- m
+var d = (B.y - A.y)// Vertical distance between supports - m
+
+var za = B.y //Elevation of highest support from reference plane - m
+
+// checking if cable length is bigger than total distance between supports
+var distance =Math.sqrt(Math.pow(L,2)+Math.pow(d,2))
+if (s <= distance){
+	console.log("Length of cable must be greater than TOTAL distance between supports!")
+}
+
+// hor. distance between lowest catenary point (P) to higher support point (La)
+var La=a*(L/(2*a)+Math.atanh(d/s))
+// hor. distance between lowest catenary point (P) to lower support point (Lb)
+var Lb=L-La
+// vert. distance from higher support point to lowest point (P) in catenary (ha)
+var ha=a*Math.cosh(La/a)-a
+	
+// calculating reaction forces and angles
+// catenary lenght between support "A" (higher) and "C" - Sa
+var Sa=a*Math.sinh(La/a)
+// catenary lenght between support "B" )lower) and "P" - Sb
+var Sb=a*Math.sinh(Lb/a)
+// horizontal tension - constant through catenary: H
+var H=w*a
+// vertical tension at "A"  (Va) and "B" (Vb)
+var Va=Sa*w
+var Vb=Sb*w
+// tension at "A" (TA) and B (TB)
+var TA=Math.sqrt(Math.pow(H,2)+Math.pow(Va,2))
+var TB=Math.sqrt(Math.pow(H,2)+Math.pow(Vb,2))
+//inclination angles from vertical at "A" (ThetA) and B (ThetB)
+var ThetA=Math.atan(H/Va)
+var ThetB=Math.atan(H/Vb)
+var ThetAd=ThetA*180/Math.pi;
+var ThetBd=ThetB*180/Math.pi;
+// establishing A, B and C in coordinate system
+// index "a" corresponding to point "A", "b" to "B"-point and "C" to lowest caten. point
+var zb=za-d
+var zp=za-ha
+var xa=La
+var xp=0
+var xb=-Lb
+
+var solucio = a*Math.sinh(L/(2*a))+Math.atanh(d/s)+a*Math.sinh(L/(2*a))-Math.atanh(d/s)-s
+
+var zdist = (B.z-A.z)
+var zAng = Math.asin(zdist/L)*180/Math.PI
+	
+var xinc=L/100
+var y=[]
+var xc=[]
+var z = []
+
+var x=xb
+y[0]=a*Math.cosh(x/a)
+var diffe = y[0] - y1
+for (var i=0; i<((xa-xinc)-xb)/xinc; i++){
+
+	xc[i]= x-xb
+	y[i]=a*Math.cosh(x/a)-diffe
+	z[i]= Math.tan(zAng)*xc[i]
+	
+	x= x+xinc
+	
+
+//	console.log (xc[i])
+//	console.log(y[i])
+	
+}
+
+
+	
+
+for (var m = 0; m < 99; m++) {
+		
+	LineGeometry.geometry.vertices[m].x = xc[m];
+	LineGeometry.geometry.vertices[m].y = y[m];
+	LineGeometry.geometry.vertices[m].z = z[m];
+	
+	 LineGeometry.geometry.verticesNeedUpdate = true;
+}
+            
+            
+
+            xAPos = parseFloat(document.getElementById('label_xA').value)
+            document.getElementById('xA_pos').value = xAPos
+            
+            x1 = xAPos
+
+            yAPos = parseFloat(document.getElementById('label_yA').value)
+            document.getElementById('yA_pos').value = yAPos
+            
+            y1 = yAPos
+			
+            zAPos = parseFloat(document.getElementById('label_zA').value)
+            document.getElementById('zA_pos').value = zAPos
+            
+            z1 =zAPos
+			
+			xBPos = parseFloat(document.getElementById('label_xB').value)
+            document.getElementById('xB_pos').value = xBPos
+            
+            x2 = xBPos
+
+            yBPos = parseFloat(document.getElementById('label_yB').value)
+            document.getElementById('yB_pos').value = yBPos
+            
+            y2=yBPos
+			
+            zBPos = parseFloat(document.getElementById('label_zB').value)
+            document.getElementById('zB_pos').value = zBPos
+            
+            z2=zBPos
+            
+            Weight = parseFloat(document.getElementById('label_w').value)
+            document.getElementById('weight').value = Weight
+            
+            s=Weight
+			
+            Density = parseFloat(document.getElementById('label_d').value)
+            document.getElementById('density').value = Density
+            
+            w=Density
+			
+			document.getElementById('tension_A').innerHTML = TA.toFixed(2);
+			
+			document.getElementById('tension_B').innerHTML = TB.toFixed(2);
+
+        }	
+	
+    camera.position.set(12, 12, -107);
+ 
+    controls.update();
+    animate();
+
+    function animate() {
+        requestAnimationFrame(animate);			
+        renderer.render(scene, camera);
+    }
+
+</script>
+
+
+</body>
