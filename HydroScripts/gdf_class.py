@@ -5,6 +5,7 @@ Created on Mon Oct 22 16:56:31 2018
 @author: dprat
 """
 import re
+import os
 import numpy as np
 from geomdl import BSpline
 # from geomdl.visualization import VisMPL
@@ -13,6 +14,8 @@ from numpy import linalg as la
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+
+import rhino
 
 class Properties:
     def __init__(self):
@@ -24,6 +27,7 @@ class GDF:
         properties = Properties
         self.properties = properties
         self.read_gdf()
+        self.scaled = False
         # self.props()
   
     def read_gdf(self):
@@ -148,7 +152,7 @@ class GDF:
             
         return ctrlpoints
     
-    def props(self, T=[], KGn=[]):
+    def props(self, T=[], KG=[]):
         print(' ')
         print('***************************')
         print('  Properties of ' + self.file_name) 
@@ -174,18 +178,13 @@ class GDF:
         Awl = [None]*self.Npatch
         
         self.irr=[]
-        [L,B,D,KG] = self.evalExtremes()
+        [L,B,D,KGe] = self.evalExtremes()
 
         if T == []:
             T = D
 
-        
-
-
         rho = 1.025
 
-
-        
         # Evaluate vertices and faces
         new_faces = []
         for ii in range(self.Npatch):
@@ -219,7 +218,7 @@ class GDF:
             vertices[ii] = np.array([list(surf[ii].tessellator.vertices[i].data) for i in range(len(surf[ii].tessellator.vertices))])
             faces[ii] = np.array([list(surf[ii].tessellator.faces[i].data) for i in range(len(surf[ii].tessellator.faces))])
 
-            vertices[ii][:,2] = vertices[ii][:,2] + np.abs(KG) # Move keel to z=0
+            vertices[ii][:,2] = vertices[ii][:,2] + np.abs(KGe) # Move keel to z=0
 
             z_max = np.max(vertices[ii][:,2])
 
@@ -447,14 +446,11 @@ class GDF:
 
             for fc in new_faces[ii]:
                 # Centroide Evaluation
- 
                 centroid[ii].append([np.mean(fc[:,0]), np.mean(fc[:,1]), np.mean(fc[:,2]) - T])
                 
                 # Normal and area evaluation
                 u = [fc[1,0] - fc[0,0], fc[1,1] - fc[0,1], fc[1,2] - fc[0,2]]
                 v = [fc[2,0] - fc[0,0], fc[2,1] - fc[0,1], fc[2,2] - fc[0,2]]
-                
-                
                 normal_aux = - np.cross(u,v)/2 # the tesselation generates normals point to inside vessel, so it is necessary the negative signal
                 area[ii].append(la.norm(normal_aux))
                 normal[ii].append(normal_aux)
@@ -520,18 +516,18 @@ class GDF:
         Volume = np.mean([Volx, Voly, Volz])
         KB = T + Vz
 
-        if KGn == []:
-            KGn = KG
+        if KG == []:
+            KG = KGe
 
-        GM  = KB + BM  - KGn
-        GMl = KB + BMl - KGn
+        GM  = KB + BM  - KG
+        GMl = KB + BMl - KG
         
+        ZPOT = KG - T
 
         # Mass matrix
-
         Rxx = 0.35 * B
         Ryy = 0.25 * L
-        coef = 0.05
+        coef = 0.05 # five percent of critical damping
 
         Mass = np.zeros((6,6))
         Mass[0,0] = Volume * rho
@@ -541,39 +537,43 @@ class GDF:
         Mass[4,4] = Volume * rho * (Ryy ** 2)
         Mass[5,5] = Volume * rho * (Rxx ** 2) + Volume * rho * (Ryy ** 2)
 
-        wn3 = np.sqrt(rho * self.g * Awl / (Mass[3,3] * 1.3))
-        wn4 = np.sqrt(GM * self.g * Mass[1,1] / (Mass[4,4] * 1.5))
-        wn5 = np.sqrt(GMl * self.g * Mass[1,1] / (Mass[5,5] * 2))
+        wn3 = np.sqrt(rho * self.g * Awl / (Mass[2,2] * 1.3))
+        wn4 = np.sqrt(GM * self.g * Mass[1,1] / (Mass[3,3] * 1.5))
+        wn5 = np.sqrt(GMl * self.g * Mass[1,1] / (Mass[4,4] * 2))
 
         Be = np.zeros((6,6))
-        Be[3,3] = coef * 2 * wn3 * Mass[3,3] * 1.3
-        Be[4,4] = coef * 2 * wn4 * Mass[4,4] * 1.5
-        Be[5,5] = coef * 2 * wn5 * Mass[5,5] * 2
-
+        Be[2,2] = coef * 2 * wn3 * Mass[2,2] * 1.3
+        Be[3,3] = coef * 2 * wn4 * Mass[3,3] * 1.5
+        Be[4,4] = coef * 2 * wn5 * Mass[4,4] * 2
 
         # prints
         print('water density = ' + "{:.3f}".format(rho) + ' t/m³')
-        print('L = ' + "{:.2f}".format(L))
-        print('B = ' + "{:.2f}".format(B))
-        print('D = ' + "{:.2f}".format(D))
-        print('KG = ' + "{:.2f}".format(KGn))
-        print('T = ' + "{:.2f}".format(T))
-        print('CB = [' + "{:.2f}".format(CB[0]) + ',' + "{:.2f}".format(CB[1]) + ',' + "{:.2f}".format(CB[2]) + ']')
-        print('BM = ' + "{:.2f}".format(BM))
-        print('BMl = ' + "{:.2f}".format(BMl))
-        print('Awl = ' + "{:.2f}".format(Awl))
-        print('Vol = ' + "{:.2f}".format(Volume) + ' [' + "{:.2f}".format(Volx) + ',' + "{:.2f}".format(Voly) + ',' + "{:.2f}".format(Volz) + ']') 
-        print('KB = ' + "{:.2f}".format(KB))
-        print('GM = ' + "{:.2f}".format(GM))
-        print('GMl = ' + "{:.2f}".format(GMl))
+        print('L = ' + "{:.2f}".format(L) + ' m')
+        print('B = ' + "{:.2f}".format(B) + ' m')
+        print('D = ' + "{:.2f}".format(D) + ' m')
+        print('T = ' + "{:.2f}".format(T) + ' m')
+        print('KG = ' + "{:.2f}".format(KG) + ' m')
+        print('CB = [' + "{:.2f}".format(CB[0]) + ', ' + "{:.2f}".format(CB[1]) + ', ' + "{:.2f}".format(CB[2]) + '] m')
+        print('KB = ' + "{:.2f}".format(KB) + ' m')
+        print('BM = ' + "{:.2f}".format(BM) + ' m')
+        print('BMl = ' + "{:.2f}".format(BMl) + ' m')
+        print('GM = ' + "{:.2f}".format(GM) + ' m')
+        print('GMl = ' + "{:.2f}".format(GMl) + ' m')
+        print('ZPOT = ' + "{:f}".format(ZPOT) + ' m')
+        print('Awl = ' + "{:.2f}".format(Awl) + ' m²')
+        print('Vol = ' + "{:.2f}".format(Volume) + ' [' + "{:.2f}".format(Volx) + ', ' + "{:.2f}".format(Voly) + ', ' + "{:.2f}".format(Volz) + '] m³') 
         print(' ')
         print('  End of gdf_class.props()') 
         print('***************************')
         print(' ')
         
         # Exporting properties
-        # self.properties.vertices = vertices
-        # self.properties.faces = faces
+        self.properties.L = L
+        self.properties.B = B
+        self.properties.D = D
+        self.properties.T = T
+        self.properties.KG = KG
+        self.properties.rho = rho
         self.properties.area = area
         self.properties.area_total = area_total
         self.properties.normal = normal
@@ -587,36 +587,97 @@ class GDF:
         self.properties.Vz = Vz
         self.properties.CB = CB
         self.properties.LCF = LCF
+        self.properties.KB = KB
+        self.properties.Awl = Awl
         self.properties.BM = BM
         self.properties.BMl = BMl
         self.properties.GM = GM
         self.properties.GMl = GMl
+        self.properties.ZPOT = ZPOT
         self.properties.Mass = Mass
         self.properties.Be = Be
         pass
+
+    def gdf_props_write(self, prop_name, gdf_out=[]):
+        if gdf_out==[]:
+            gdf_out = self.file_name
+
+        prop = open(prop_name,'w')
+        # prints
+        prop.write('Properties of model: ' + gdf_out + '\n\n')
+        prop.write('water density = ' + "{:.3f}".format(self.properties.rho) + ' t/m³' + '\n')
+        prop.write('L = ' + "{:.2f}".format(self.properties.L) + ' m\n')
+        prop.write('B = ' + "{:.2f}".format(self.properties.B) + ' m\n')
+        prop.write('D = ' + "{:.2f}".format(self.properties.D) + ' m\n')
+        prop.write('T = ' + "{:.2f}".format(self.properties.T) + ' m\n')
+        prop.write('KG = ' + "{:.2f}".format(self.properties.KG) + ' m\n')
+        prop.write('CB = [' + "{:.2f}".format(self.properties.CB[0]) + ', ' + "{:.2f}".format(self.properties.CB[1]) + ', ' + "{:.2f}".format(self.properties.CB[2]) + ']' + ' m\n')
+        prop.write('KB = ' + "{:.2f}".format(self.properties.KB) + ' m\n')
+        prop.write('BM = ' + "{:.2f}".format(self.properties.BM) + ' m\n')
+        prop.write('BMl = ' + "{:.2f}".format(self.properties.BMl) + ' m\n')
+        prop.write('GM = ' + "{:.2f}".format(self.properties.GM) + ' m\n')
+        prop.write('GMl = ' + "{:.2f}".format(self.properties.GMl) + ' m\n')
+        prop.write('ZPOT = ' + "{:f}".format(self.properties.ZPOT) + ' m\n')
+        prop.write('Awl = ' + "{:.2f}".format(self.properties.Awl) + ' m²\n')
+        prop.write('Vol = ' + "{:.2f}".format(self.properties.Volume) + ' [' + "{:.2f}".format(self.properties.Volx) + ', ' + "{:.2f}".format(self.properties.Voly) + ', ' + "{:.2f}".format(self.properties.Volz) + ']' + ' m³\n') 
+        prop.write('\nFORCE FILE:\n')
+        prop.write('1\n')
+        for m1 in self.properties.Mass:
+            for m2 in m1:
+                prop.write("{:.5e}".format(m2))
+                prop.write(" ")
+            prop.write('\n')
+        prop.write('1\n')
+        for m1 in self.properties.Be:
+            for m2 in m1:
+                prop.write("{:.5e}".format(m2))
+                prop.write(" ")
+            prop.write('\n')
+        prop.write('1\n')
+        for m1 in np.zeros((6,6)):
+            for m2 in m1:
+                prop.write("{:.5e}".format(m2))
+                prop.write(" ")
+            prop.write('\n')    
+
+        pass
     
-    def gdf_write(self, gdf_out):
-        gdf = open(gdf_out,'w')
+    def gdf_write(self, gdf_out, path_out=[], LWL_rhino=False):
+        if path_out != []:
+            # os.mkdir(path_out,exist_ok=True)
+            os.makedirs(path_out, exist_ok=True)
+            gdf_name = path_out + '\\' + gdf_out
+        else:
+            gdf_name = gdf_out
+        
+        gdf = open(gdf_name,'w')
+
         gdf.write('SCALED GDF FILE\n')
         gdf.write(str(self.ulen) + ' ' + str(self.g) + ' ULEN GRAV\n')
         gdf.write(str(self.Isx) + ' ' + str(self.Isy) + ' ISX  ISY\n')
-        gdf.write(str(self.Npatch) + ' ' + str(self.IGDEF) + ' NPATCH IGDEF\n')
+        gdf.write(str(np.sum(self.irr)) + ' ' + str(self.IGDEF) + ' NPATCH IGDEF\n')
         for ii in range(self.Npatch):
-            gdf.write(str(self.NUG[ii]) + ' ' +  str(self.NVG[ii]) + '\n')
-            gdf.write(str(self.KUG[ii]) + ' ' +  str(self.KVG[ii]) + '\n')
-            for lt in self.VKNTUG[ii]:
-                gdf.write(' ' + str(lt) + '\n')
+            if self.irr[ii] == 0:
+                gdf.write(str(self.NUG[ii]) + ' ' +  str(self.NVG[ii]) + '\n')
+                gdf.write(str(self.KUG[ii]) + ' ' +  str(self.KVG[ii]) + '\n')
+                for lt in self.VKNTUG[ii]:
+                    gdf.write(' ' + str(lt) + '\n')
 
-            for lt in self.VKNTVG[ii]:
-                gdf.write(' ' + str(lt) + '\n')
-            
-            for lt in range(len(self.XCOEF_1[ii])):
-                gdf.write(' ' + str(self.XCOEF_1[ii][lt]) +' ' + str(self.XCOEF_2[ii][lt]) + ' ' + str(self.XCOEF_3[ii][lt]) + '\n')
-            gdf.write('\n')
+                for lt in self.VKNTVG[ii]:
+                    gdf.write(' ' + str(lt) + '\n')
+                
+                for lt in range(len(self.XCOEF_1[ii])):
+                    gdf.write(' ' + str(self.XCOEF_1[ii][lt] + self.properties.CB[0]) +' ' + str(self.XCOEF_2[ii][lt]) + ' ' + str(self.XCOEF_3[ii][lt]) + '\n')
+                gdf.write('\n')
         gdf.close()
+
+        self.gdf_props_write(gdf_name[:-4] + '_props.txt', gdf_out)
+
+        if LWL_rhino == True:
+            rhino.LWL_ho(gdf_out, self.properties.ZPOT, True, path_gdf=path_out)
         pass
     
-    def gdf_scale(self, Lf, Bf, Df, T=[], KGn=[]):
+    def gdf_scale(self, Lf, Bf, Df, T=[], KG=[]):
         # Final Dimensions
         #    Lf = 250
         #    Bf = 45
@@ -624,8 +685,8 @@ class GDF:
         
         [L,B,D,K] = self.evalExtremes()
         
-        if KGn == []:
-            KGn = K
+        if KG == []:
+            KG = K
 
         if hasattr(self,'DimOriginal') == False:
             self.DimOriginal = [L,B,D,K]
@@ -640,14 +701,14 @@ class GDF:
         if D==0:
             D=1
             
-        #Fatores de escala    
+        #Scale Factors
         f_L = Lf/L
         f_B = Bf/B
         f_D = Df/D
         
         XCOEF_1_n = [np.array(self.XCOEF_1[jj])*f_L for jj in range(self.Npatch)]
         XCOEF_2_n = [np.array(self.XCOEF_2[jj])*f_B for jj in range(self.Npatch)]
-        XCOEF_3_n = [(np.array(self.XCOEF_3[jj])+K)*f_D-KGn for jj in range(self.Npatch)]
+        XCOEF_3_n = [(np.array(self.XCOEF_3[jj])+K)*f_D-KG for jj in range(self.Npatch)]
                 
         self.XCOEF_1 = XCOEF_1_n
         self.XCOEF_2 = XCOEF_2_n
@@ -678,11 +739,13 @@ class GDF:
         if self.Isy==1:
             B*=2
             
-        KG = abs(z_min)
+        KGe = abs(z_min)
         
-#        print('Extremos: L = ' + str(L) + '\n          B = ' + str(B) + '\n          D = ' + str(D) + '\n          KG = ' + str(KG))
+#        print('Extremos: L = ' + str(L) + '\n          B = ' + str(B) + '\n          D = ' + str(D) + '\n          KGe = ' + str(KGe))
         
-        return [L,B,D,KG]
+        return [L,B,D,KGe]
+
+        
 
 
 
@@ -691,7 +754,7 @@ class GDF:
 # painel = GDF('ship2.gdf')
 
 # # scale gdf file
-# painel.gdf_scale(300, 40, 20, T=10, KGn=14)
+# painel.gdf_scale(300, 40, 20, T=10, KG=14)
 
 # # exporting gdf
 # painel.gdf_write('ship_scaled.gdf')

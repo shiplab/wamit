@@ -1,7 +1,7 @@
 */__pycache__/*
-.vscode/*
+*/.vscode/*
+*.idea/*
 *.4
-.idea/*
 *.wnf
 input_aw.txt
 *.old
