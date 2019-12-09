@@ -1,17 +1,7 @@
-# HydroScripts
+# WAMIT API
 
-This is a set of several python scripts to pre and post-processing WAMIT outputs.
+WAMIT API to be used in open source projects with USP/NTNU/OSC
 
-## Analysis Wamit
+## HydroScripts
 
-```python
-import analysis_wamit
-
-r = analysis_wamit.raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180])
-```
-
-```plota```    - flag to plot outputs
-
-```dof_plot``` - degrees of freedom to plot
-
-```inc_plot``` - headings to plot
+A set of python scripts to pre and post-propcessing wamit models
