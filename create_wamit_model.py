@@ -30,7 +30,7 @@ config.write('NEWMDS(1)=0\n')
 config.write('ITRIMWL=1\n')
 config.write('NCPU=20\n')
 config.write('RAMGBMAX=120\n')
-config.write('USERID_PATH=c:\wamitv7061\\\n')
+config.write('USERID_PATH=c:\\wamitv7061\\\n')
 
 config.close()
 

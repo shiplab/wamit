@@ -7,8 +7,12 @@ Created on Mon Oct 22 16:56:31 2018
 import re
 import numpy as np
 from geomdl import BSpline
-#from geomdl.visualization import VisMPL as vis
+# from geomdl.visualization import VisMPL
+# from matplotlib import cm
 from numpy import linalg as la
+
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 class Properties:
     def __init__(self):
@@ -20,7 +24,7 @@ class GDF:
         properties = Properties
         self.properties = properties
         self.read_gdf()
-        self.props()
+        # self.props()
   
     def read_gdf(self):
         fileID = open(self.file_name)
@@ -144,11 +148,16 @@ class GDF:
             
         return ctrlpoints
     
-    def props(self):       
+    def props(self, T=[], KGn=[]):
+        print(' ')
+        print('***************************')
+        print('  Properties of ' + self.file_name) 
+        print(' ')
+        # Variables Initialization     
         faces = [None]*self.Npatch
-        centroide = [None]*self.Npatch
+        centroid = [None]*self.Npatch
         vertices = [None]*self.Npatch
-        normais = [None]*self.Npatch
+        normal = [None]*self.Npatch
         area = [None]*self.Npatch
         area_total = [None]*self.Npatch
         surf = [None]*self.Npatch
@@ -162,20 +171,25 @@ class GDF:
         LCF = [None]*self.Npatch
         BM = [None]*self.Npatch
         BMl = [None]*self.Npatch
+        Awl = [None]*self.Npatch
         
         self.irr=[]
         [L,B,D,KG] = self.evalExtremes()
-        print('L = ' + "{:.2f}".format(L))
-        print('B = ' + "{:.2f}".format(B))
-        print('D = ' + "{:.2f}".format(D))
-        print('KG = ' + "{:.2f}".format(KG))
+
+        if T == []:
+            T = D
+
         
-        # manual draft definition (must be implemented as function call)
+
+
+        rho = 1.025
+
+
         
-        T = 10
-        
+        # Evaluate vertices and faces
+        new_faces = []
         for ii in range(self.Npatch):
-            # determines which patches are irr=1
+            # determines which patches have irr=1
             if abs(np.max(self.XCOEF_3[ii])-np.min(self.XCOEF_3[ii]))<0.2:
                 self.irr.append(1)
             else:
@@ -190,103 +204,380 @@ class GDF:
     
             # Set evaluation delta
             #surf.delta = 0.025
-            surf[ii].delta_u = 1/(2*self.Mu[ii]) #0.025
-            surf[ii].delta_v = 1/(2*self.Mv[ii]) #0.025#
+            surf[ii].delta_u = .02 #1/(2*self.Mu[ii]) #0.025
+            surf[ii].delta_v = .02 #1/(2*self.Mv[ii]) #0.025#
             
             surf[ii].evaluate()
-            surf[ii].tessellate()
-            
-            vertices[ii] = [list(surf[ii].tessellator.vertices[i].data) for i in range(len(surf[ii].tessellator.vertices))]
-            faces[ii] = [list(surf[ii].tessellator.faces[i].data) for i in range(len(surf[ii].tessellator.faces))]
-            
-            ##### IMPLEMENT FUNCTION THAT REDEFINS VERTICES AND FACES BASED ON THE draft
-            # move keel to Z=0
-            
-            ###########################################################################
-            
-            normais[ii] = []
-            area[ii] = []
-            centroide[ii] = []
+            surf[ii].tessellate() # The tesselation function provides triangles faces in which the evaluations will be done
+            # if ii ==1:
+            #     # Set visualization component
+            #     surf[ii].vis = VisMPL.VisSurface(ctrlpts=False, legend=False)
 
-            for fc in faces[ii]:
+            #     # Plot the surface
+            #     surf[ii].render(colormap=cm.terrain)
+            
+            vertices[ii] = np.array([list(surf[ii].tessellator.vertices[i].data) for i in range(len(surf[ii].tessellator.vertices))])
+            faces[ii] = np.array([list(surf[ii].tessellator.faces[i].data) for i in range(len(surf[ii].tessellator.faces))])
+
+            vertices[ii][:,2] = vertices[ii][:,2] + np.abs(KG) # Move keel to z=0
+
+            z_max = np.max(vertices[ii][:,2])
+
+            z_min = np.min(vertices[ii][:,2])
+
+            z_test = vertices[ii][:,2]
+            
+            if self.irr[ii] == 0:
+                ## Find faces with all vertices above waterline
+                id_above = z_test[faces[ii]] > T
+                id_all_above = np.sum(id_above,1) == 3
+                id_2_above = np.sum(id_above,1) == 2
+                id_1_above = np.sum(id_above,1) == 1
+                id_all_under = np.sum(id_above,1) == 0
+                # Cut panels above water line
+
+                # create new panels
+                #Panels with all vtx under water line
+                vtx_0 = vertices[ii][faces[ii][id_all_under],:]
+
+                #Panels with 1 vtx above water line
+                vtx_1 = vertices[ii][faces[ii][id_1_above],:]
+                new_faces1 = []
+                for vtx_aux in vtx_1:
+                    test_aux = vtx_aux[:,2] > T
+                    x_aux = vtx_aux[:,0]
+                    y_aux = vtx_aux[:,1]
+                    z_aux = vtx_aux[:,2]
+                    # Case 1
+                    if np.array_equal(test_aux, np.array([True, False, False])):
+                        
+                        p1_x = np.interp(T, [z_aux[0], z_aux[1]], [x_aux[0], x_aux[1]])
+                        p1_y = np.interp(T, [z_aux[0], z_aux[1]], [y_aux[0], y_aux[1]])
+
+                        p2_x = np.interp(T, [z_aux[0], z_aux[2]], [x_aux[0], x_aux[2]])
+                        p2_y = np.interp(T, [z_aux[0], z_aux[2]], [y_aux[0], y_aux[2]])
+
+                        p1 = np.array([p1_x, p1_y, T])
+                        p2 = np.array([p2_x, p2_y, T])
+
+                        fc1 = np.array([p1, vtx_aux[1,:], vtx_aux[2,:]])
+                        fc2 = np.array([p1, vtx_aux[1,:], p2])
+                        
+                        new_faces1.append(fc1)
+                        new_faces1.append(fc2)
+                    # Case 2
+                    elif np.array_equal(test_aux,np.array([False, True, False])):
+
+                        p1_x = np.interp(T, [z_aux[0], z_aux[1]], [x_aux[0], x_aux[1]])
+                        p1_y = np.interp(T, [z_aux[0], z_aux[1]], [y_aux[0], y_aux[1]])
+
+                        p2_x = np.interp(T, [z_aux[1], z_aux[2]], [x_aux[1], x_aux[2]])
+                        p2_y = np.interp(T, [z_aux[1], z_aux[2]], [y_aux[1], y_aux[2]])
+
+                        p1 = np.array([p1_x, p1_y, T])
+                        p2 = np.array([p2_x, p2_y, T])
+
+                        fc1 = np.array([vtx_aux[0,:], p1, vtx_aux[2,:]])
+                        fc2 = np.array([p1, p2, vtx_aux[2,:]])
+
+                        new_faces1.append(fc1)
+                        new_faces1.append(fc2)
+                    # Case 3
+                    else:
+
+                        p1_x = np.interp(T, [z_aux[0], z_aux[2]], [x_aux[0], x_aux[2]])
+                        p1_y = np.interp(T, [z_aux[0], z_aux[2]], [y_aux[0], y_aux[2]])
+
+                        p2_x = np.interp(T, [z_aux[1], z_aux[2]], [x_aux[1], x_aux[2]])
+                        p2_y = np.interp(T, [z_aux[1], z_aux[2]], [y_aux[1], y_aux[2]])
+
+                        p1 = np.array([p1_x, p1_y, T])
+                        p2 = np.array([p2_x, p2_y, T])
+
+                        fc1 = np.array([vtx_aux[0,:], vtx_aux[1,:], p2])
+                        fc2 = np.array([vtx_aux[0,:], p2, p1])
+                        
+                        new_faces1.append(fc1)
+                        new_faces1.append(fc2)
+
+                # ############################
+                # # debug (must be commented)    
+                # fig = plt.figure()
+                # ax = fig.add_subplot(111, projection='3d') 
+                # nfx = np.reshape(np.array(new_faces1),(len(new_faces1)*3,3))
+                # nfx1 = np.reshape(np.array(vtx_1),(len(vtx_1)*3,3))
+                # ax.scatter(nfx[:,0], nfx[:,1], nfx[:,2], zdir='z', s=20)
+                # ax.scatter(nfx1[:,0], nfx1[:,1], nfx1[:,2], zdir='z', s=20)
+                # for nfxx in new_faces1:
+                #     ct = [np.mean(nfxx[:,0]), np.mean(nfxx[:,1]), np.mean(nfxx[:,2])]
+                #     ux = [nfxx[1,0] - nfxx[0,0], nfxx[1,1] - nfxx[0,1], nfxx[1,2] - nfxx[0,2]]
+                #     vx = [nfxx[2,0] - nfxx[0,0], nfxx[2,1] - nfxx[0,1], nfxx[2,2] - nfxx[0,2]]
+                #     nx = np.cross(ux,vx)/2
+                #     ax.plot([ct[0], ct[0]+nx[0]], [ct[1], ct[1]+nx[1]], [ct[2],ct[2]+nx[2]], color='black')
+                #     ax.plot(nfxx[[0,1,2,0],0], nfxx[[0,1,2,0],1], nfxx[[0,1,2,0],2], color='blue')
+
+                # for nfxx in vtx_1:
+                #     ct = [np.mean(nfxx[:,0]), np.mean(nfxx[:,1]), np.mean(nfxx[:,2])]
+                #     ux = [nfxx[1,0] - nfxx[0,0], nfxx[1,1] - nfxx[0,1], nfxx[1,2] - nfxx[0,2]]
+                #     vx = [nfxx[2,0] - nfxx[0,0], nfxx[2,1] - nfxx[0,1], nfxx[2,2] - nfxx[0,2]]
+                #     nx = np.cross(ux,vx)/2
+                #     ax.plot([ct[0], ct[0]+nx[0]], [ct[1], ct[1]+nx[1]], [ct[2],ct[2]+nx[2]],color='red')
+                #     ax.plot(nfxx[[0,1,2,0],0], nfxx[[0,1,2,0],1], nfxx[[0,1,2,0],2], color='green')
+
+                # # plt.show()
+                # ############################
+
+                #Panels with 2 vtx above water line
+                vtx_2 = vertices[ii][faces[ii][id_2_above],:]
+                new_faces2 = []
+                for vtx_aux in vtx_2:
+                    test_aux = vtx_aux[:,2] > T
+                    x_aux = vtx_aux[:,0]
+                    y_aux = vtx_aux[:,1]
+                    z_aux = vtx_aux[:,2]
+                    # Case 1
+                    if np.array_equal(test_aux, np.array([True, True, False])):
+                        
+                        p1_x = np.interp(T, [z_aux[0], z_aux[2]], [x_aux[0], x_aux[2]])
+                        p1_y = np.interp(T, [z_aux[0], z_aux[2]], [y_aux[0], y_aux[2]])
+
+                        p2_x = np.interp(T, [z_aux[1], z_aux[2]], [x_aux[1], x_aux[2]])
+                        p2_y = np.interp(T, [z_aux[1], z_aux[2]], [y_aux[1], y_aux[2]])
+
+                        p1 = np.array([p1_x, p1_y, T])
+                        p2 = np.array([p2_x, p2_y, T])
+
+                        fc1 = np.array([p1, p2, vtx_aux[2,:]])
+                        
+                        new_faces2.append(fc1)
+                    # Case 2
+                    elif np.array_equal(test_aux,np.array([False, True, True])):
+
+                        p1_x = np.interp(T, [z_aux[0], z_aux[1]], [x_aux[0], x_aux[1]])
+                        p1_y = np.interp(T, [z_aux[0], z_aux[1]], [y_aux[0], y_aux[1]])
+
+                        p2_x = np.interp(T, [z_aux[0], z_aux[2]], [x_aux[0], x_aux[2]])
+                        p2_y = np.interp(T, [z_aux[0], z_aux[2]], [y_aux[0], y_aux[2]])
+
+                        p1 = np.array([p1_x, p1_y, T])
+                        p2 = np.array([p2_x, p2_y, T])
+
+                        fc1 = np.array([vtx_aux[0,:], p1, p2])
+
+                        new_faces2.append(fc1)
+                    # Case 3
+                    else:
+
+                        p1_x = np.interp(T, [z_aux[1], z_aux[2]], [x_aux[1], x_aux[2]])
+                        p1_y = np.interp(T, [z_aux[1], z_aux[2]], [y_aux[1], y_aux[2]])
+
+                        p2_x = np.interp(T, [z_aux[1], z_aux[0]], [x_aux[1], x_aux[0]])
+                        p2_y = np.interp(T, [z_aux[1], z_aux[0]], [y_aux[1], y_aux[0]])
+
+                        p1 = np.array([p1_x, p1_y, T])
+                        p2 = np.array([p2_x, p2_y, T])
+
+                        fc1 = np.array([p2, vtx_aux[1,:], p1])
+                        
+                        new_faces2.append(fc1)
+
+                # ############################
+                # # debug (must be commented)    
+                # fig = plt.figure()
+                # ax2 = fig.add_subplot(111, projection='3d') 
+                # nfx = np.reshape(np.array(new_faces2),(len(new_faces2)*3,3))
+                # nfx1 = np.reshape(np.array(vtx_1),(len(vtx_1)*3,3))
+                # ax2.scatter(nfx[:,0], nfx[:,1], nfx[:,2], zdir='z', s=20)
+                # ax2.scatter(nfx1[:,0], nfx1[:,1], nfx1[:,2], zdir='z', s=20)
+                # for nfxx in new_faces2:
+                #     ct = [np.mean(nfxx[:,0]), np.mean(nfxx[:,1]), np.mean(nfxx[:,2])]
+                #     ux = [nfxx[1,0] - nfxx[0,0], nfxx[1,1] - nfxx[0,1], nfxx[1,2] - nfxx[0,2]]
+                #     vx = [nfxx[2,0] - nfxx[0,0], nfxx[2,1] - nfxx[0,1], nfxx[2,2] - nfxx[0,2]]
+                #     nx = np.cross(ux,vx)/2
+                #     ax2.plot([ct[0], ct[0]+nx[0]], [ct[1], ct[1]+nx[1]], [ct[2],ct[2]+nx[2]], color='black')
+                #     ax2.plot(nfxx[[0,1,2,0],0], nfxx[[0,1,2,0],1], nfxx[[0,1,2,0],2], color='blue')
+
+                # for nfxx in vtx_1:
+                #     ct = [np.mean(nfxx[:,0]), np.mean(nfxx[:,1]), np.mean(nfxx[:,2])]
+                #     ux = [nfxx[1,0] - nfxx[0,0], nfxx[1,1] - nfxx[0,1], nfxx[1,2] - nfxx[0,2]]
+                #     vx = [nfxx[2,0] - nfxx[0,0], nfxx[2,1] - nfxx[0,1], nfxx[2,2] - nfxx[0,2]]
+                #     nx = np.cross(ux,vx)/2
+                #     ax2.plot([ct[0], ct[0]+nx[0]], [ct[1], ct[1]+nx[1]], [ct[2],ct[2]+nx[2]],color='red')
+                #     ax2.plot(nfxx[[0,1,2,0],0], nfxx[[0,1,2,0],1], nfxx[[0,1,2,0],2], color='green')
+
+                # plt.show()
+                # ############################
+
+                if new_faces1 == []:
+                    new_faces1 = np.array(new_faces1).reshape((0,3,3))
+
+                if new_faces2 == []:
+                    new_faces2 = np.array(new_faces2).reshape((0,3,3))
+
+                new_faces_aux = np.append(vtx_0, new_faces1, axis=0)
+                new_faces_aux = np.append(new_faces_aux, new_faces2, axis=0)
+                new_faces.append(new_faces_aux)
+            else:
+                new_faces.append([])
+
+        # ############################
+        # # debug (must be commented)    
+        # fig = plt.figure()
+        # ax2 = fig.add_subplot(111, projection='3d') 
+        # nfx = np.reshape(np.array(new_faces),(len(new_faces)*3,3))
+        
+        # ax2.scatter(nfx[:,0], nfx[:,1], nfx[:,2], zdir='z', s=20)
+        
+        # for nfxx in new_faces:
+        #     ct = [np.mean(nfxx[:,0]), np.mean(nfxx[:,1]), np.mean(nfxx[:,2])]
+        #     ux = [nfxx[1,0] - nfxx[0,0], nfxx[1,1] - nfxx[0,1], nfxx[1,2] - nfxx[0,2]]
+        #     vx = [nfxx[2,0] - nfxx[0,0], nfxx[2,1] - nfxx[0,1], nfxx[2,2] - nfxx[0,2]]
+        #     nx = np.cross(ux,vx)/2
+        #     ax2.plot([ct[0], ct[0]+nx[0]], [ct[1], ct[1]+nx[1]], [ct[2],ct[2]+nx[2]], color='black')
+        #     ax2.plot(nfxx[[0,1,2,0],0], nfxx[[0,1,2,0],1], nfxx[[0,1,2,0],2], color='blue')
+
+        # plt.show()
+        # ############################
+
+        for ii in range(len(new_faces)):
+            
+            normal[ii] = []
+            area[ii] = []
+            centroid[ii] = []
+
+            for fc in new_faces[ii]:
                 # Centroide Evaluation
-                xc = np.mean([vertices[ii][fc[0]][0], vertices[ii][fc[1]][0], vertices[ii][fc[2]][0]])
-                yc = np.mean([vertices[ii][fc[0]][1], vertices[ii][fc[1]][1], vertices[ii][fc[2]][1]])
-                zc = np.mean([vertices[ii][fc[0]][2], vertices[ii][fc[1]][2], vertices[ii][fc[2]][2]])+(KG-D)              
-                centroide[ii].append([xc, yc, zc])
+ 
+                centroid[ii].append([np.mean(fc[:,0]), np.mean(fc[:,1]), np.mean(fc[:,2]) - T])
                 
                 # Normal and area evaluation
-                u = np.array([vertices[ii][fc[1]][0] - vertices[ii][fc[0]][0], vertices[ii][fc[1]][1] - vertices[ii][fc[0]][1], vertices[ii][fc[1]][2] - vertices[ii][fc[0]][2]])
-                v = np.array([vertices[ii][fc[2]][0] - vertices[ii][fc[0]][0], vertices[ii][fc[2]][1] - vertices[ii][fc[0]][1], vertices[ii][fc[2]][2] - vertices[ii][fc[0]][2]])
+                u = [fc[1,0] - fc[0,0], fc[1,1] - fc[0,1], fc[1,2] - fc[0,2]]
+                v = [fc[2,0] - fc[0,0], fc[2,1] - fc[0,1], fc[2,2] - fc[0,2]]
                 
-                normal_aux = np.cross(u,v)/2
+                
+                normal_aux = - np.cross(u,v)/2 # the tesselation generates normals point to inside vessel, so it is necessary the negative signal
                 area[ii].append(la.norm(normal_aux))
-                normais[ii].append(normal_aux)
-#                if la.norm(normal_aux) == 0:
-#                    normais[ii].append(np.array([0, 0, 0]))
-#                else:
-#                    normais[ii].append(normal_aux/la.norm(normal_aux))
+                normal[ii].append(normal_aux)
             
             area[ii] = np.array(area[ii])
             area_total[ii] = np.sum(area[ii])
-            centroide[ii] = np.array(centroide[ii])
-            normais[ii] = np.array(normais[ii])
+            centroid[ii] = np.array(centroid[ii])
+            normal[ii] = np.array(normal[ii])
             prod = 2*np.sum([self.Isx, self.Isy])
-            Volx[ii] = np.sum(normais[ii][:,0]*centroide[ii][:,0])*prod
-            Voly[ii] = np.sum(normais[ii][:,1]*centroide[ii][:,1])*prod
-            Volz[ii] = np.sum(normais[ii][:,2]*centroide[ii][:,2])*prod
-            Vx[ii] = np.sum(normais[ii][:,0]*centroide[ii][:,0]**2)/np.sum(normais[ii][:,0]*centroide[ii][:,0])/2
-            Vy[ii] = np.sum(normais[ii][:,1]*centroide[ii][:,1]**2)/np.sum(normais[ii][:,0]*centroide[ii][:,0])/2
-            Vz[ii] = np.sum(normais[ii][:,2]*centroide[ii][:,2]**2)/np.sum(normais[ii][:,0]*centroide[ii][:,0])/2
-            LCF[ii] = np.sum(normais[ii][:,2]*centroide[ii][:,0])/np.sum(normais[ii][:,2])
-            BM[ii]  = -np.sum(normais[ii][:,2]*centroide[ii][:,1]**2)/np.sum(normais[ii][:,2]*centroide[ii][:,2])
-            BMl[ii] = -np.sum(normais[ii][:,2]*centroide[ii][:,0]**2)/np.sum(normais[ii][:,2]*centroide[ii][:,2])
+            if normal[ii].size == 0:
+                Volx[ii] = 0.0
+                Voly[ii] = 0.0
+                Volz[ii] = 0.0
+                Vx[ii] = 0.0
+                Vy[ii] = 0.0
+                Vz[ii] = 0.0
+                LCF[ii] = 0.0
+                BM[ii]  = 0.0
+                BMl[ii] = 0.0
+                Awl[ii] = 0.0
+            else:
+                Volx[ii] = np.sum(normal[ii][:,0] * centroid[ii][:,0]) * prod
+                Voly[ii] = np.sum(normal[ii][:,1] * centroid[ii][:,1]) * prod
+                Volz[ii] = np.sum(normal[ii][:,2] * centroid[ii][:,2]) * prod
+                Vx[ii] = np.sum(normal[ii][:,0] * centroid[ii][:,0]**2) / np.sum(normal[ii][:,0] * centroid[ii][:,0]) / 2
+                Vy[ii] = np.sum(normal[ii][:,1] * centroid[ii][:,1]**2) / np.sum(normal[ii][:,0] * centroid[ii][:,0]) / 2
+                Vz[ii] = np.sum(normal[ii][:,2] * centroid[ii][:,2]**2) / np.sum(normal[ii][:,0] * centroid[ii][:,0]) / 2
+                LCF[ii] = np.sum(normal[ii][:,2] * centroid[ii][:,0]) / np.sum(normal[ii][:,2])
+                BM[ii]  = -np.sum(normal[ii][:,2] * centroid[ii][:,1]**2) / np.sum(normal[ii][:,2] * centroid[ii][:,2])
+                BMl[ii] = -np.sum(normal[ii][:,2] * centroid[ii][:,0]**2) / np.sum(normal[ii][:,2] * centroid[ii][:,2])
+                Awl[ii] = -np.sum(normal[ii][:,2])
             
         flag_irr =  abs(np.array(self.irr)-1)   
         
-        Volx = np.sum(flag_irr*Volx)
-        Voly = np.sum(flag_irr*Voly)
-        Volz = np.sum(flag_irr*Volz)
+        Volx = np.sum(flag_irr * Volx)
+        Voly = np.sum(flag_irr * Voly)
+        Volz = np.sum(flag_irr * Volz)
         
         if self.Isx == 1:
             Vx = np.float64(0.0)
         else:
-            Vx = np.sum(flag_irr*Vx)
+            Vx = np.sum(flag_irr * Vx)
             
         if self.Isy == 1:
             Vy = np.float64(0.0)
         else:
-            Vy = np.sum(flag_irr*Vy)
-        
-        Vz = np.sum(flag_irr*Vz) - (KG-D)
-        
-        CB = np.array([Vx,Vy,Vz])
-        print('CB = [' + "{:.2f}".format(CB[0]) + ',' + "{:.2f}".format(CB[1]) + ',' + "{:.2f}".format(CB[2]) + ']')
-        
-        LCF = np.sum(flag_irr*LCF)
-        BM = np.sum(flag_irr*BM)
-        print('BM = ' + "{:.2f}".format(BM))
-        BMl = np.sum(flag_irr*BMl)
-        print('BMl = ' + "{:.2f}".format(BMl))
-        
-        Volume = np.mean([Volx,Voly,Volz])
-        print('Vol = ' + "{:.2f}".format(Volume) + ' [' + "{:.2f}".format(Volx) + ',' + "{:.2f}".format(Voly) + ',' + "{:.2f}".format(Volz) + ']') 
-        
-        KB = KG + CB[2]
-        print('KB = ' + "{:.2f}".format(KB))
+            Vy = np.sum(flag_irr * Vy)
 
-        GM  = KB + BM  - KG        
+        if ((self.Isx == 1) and (self.Isy == 1)):
+            awl_coef = 4
+        elif ((self.Isx == 1) or (self.Isy == 1)):
+            awl_coef = 2
+        else:
+            awl_coef = 1
+        
+        Vz = np.sum(flag_irr * Vz)
+        
+        CB = np.array([Vx, Vy, Vz])
+        LCF = np.sum(flag_irr * LCF)
+        BM = np.sum(flag_irr * BM)
+        BMl = np.sum(flag_irr * BMl)
+        Awl = np.sum(flag_irr * Awl) * awl_coef
+        Volume = np.mean([Volx, Voly, Volz])
+        KB = T + Vz
+
+        if KGn == []:
+            KGn = KG
+
+        GM  = KB + BM  - KGn
+        GMl = KB + BMl - KGn
+        
+
+        # Mass matrix
+
+        Rxx = 0.35 * B
+        Ryy = 0.25 * L
+        coef = 0.05
+
+        Mass = np.zeros((6,6))
+        Mass[0,0] = Volume * rho
+        Mass[1,1] = Volume * rho
+        Mass[2,2] = Volume * rho
+        Mass[3,3] = Volume * rho * (Rxx ** 2)
+        Mass[4,4] = Volume * rho * (Ryy ** 2)
+        Mass[5,5] = Volume * rho * (Rxx ** 2) + Volume * rho * (Ryy ** 2)
+
+        wn3 = np.sqrt(rho * self.g * Awl / (Mass[3,3] * 1.3))
+        wn4 = np.sqrt(GM * self.g * Mass[1,1] / (Mass[4,4] * 1.5))
+        wn5 = np.sqrt(GMl * self.g * Mass[1,1] / (Mass[5,5] * 2))
+
+        Be = np.zeros((6,6))
+        Be[3,3] = coef * 2 * wn3 * Mass[3,3] * 1.3
+        Be[4,4] = coef * 2 * wn4 * Mass[4,4] * 1.5
+        Be[5,5] = coef * 2 * wn5 * Mass[5,5] * 2
+
+
+        # prints
+        print('water density = ' + "{:.3f}".format(rho) + ' t/m³')
+        print('L = ' + "{:.2f}".format(L))
+        print('B = ' + "{:.2f}".format(B))
+        print('D = ' + "{:.2f}".format(D))
+        print('KG = ' + "{:.2f}".format(KGn))
+        print('T = ' + "{:.2f}".format(T))
+        print('CB = [' + "{:.2f}".format(CB[0]) + ',' + "{:.2f}".format(CB[1]) + ',' + "{:.2f}".format(CB[2]) + ']')
+        print('BM = ' + "{:.2f}".format(BM))
+        print('BMl = ' + "{:.2f}".format(BMl))
+        print('Awl = ' + "{:.2f}".format(Awl))
+        print('Vol = ' + "{:.2f}".format(Volume) + ' [' + "{:.2f}".format(Volx) + ',' + "{:.2f}".format(Voly) + ',' + "{:.2f}".format(Volz) + ']') 
+        print('KB = ' + "{:.2f}".format(KB))
         print('GM = ' + "{:.2f}".format(GM))
-        
-        GMl = KB + BMl - KG
         print('GMl = ' + "{:.2f}".format(GMl))
+        print(' ')
+        print('  End of gdf_class.props()') 
+        print('***************************')
+        print(' ')
         
-        self.properties.vertices = vertices
-        self.properties.faces = faces
+        # Exporting properties
+        # self.properties.vertices = vertices
+        # self.properties.faces = faces
         self.properties.area = area
         self.properties.area_total = area_total
-        self.properties.normais = normais
-        self.properties.centroide = centroide
+        self.properties.normal = normal
+        self.properties.centroid = centroid
         self.properties.Volx = Volx
         self.properties.Voly = Voly
         self.properties.Volz = Volz
@@ -300,9 +591,11 @@ class GDF:
         self.properties.BMl = BMl
         self.properties.GM = GM
         self.properties.GMl = GMl
+        self.properties.Mass = Mass
+        self.properties.Be = Be
         pass
     
-    def gdf_write(self,gdf_out):
+    def gdf_write(self, gdf_out):
         gdf = open(gdf_out,'w')
         gdf.write('SCALED GDF FILE\n')
         gdf.write(str(self.ulen) + ' ' + str(self.g) + ' ULEN GRAV\n')
@@ -323,7 +616,7 @@ class GDF:
         gdf.close()
         pass
     
-    def gdf_scale(self,Lf,Bf,Df):
+    def gdf_scale(self, Lf, Bf, Df, T=[], KGn=[]):
         # Final Dimensions
         #    Lf = 250
         #    Bf = 45
@@ -331,6 +624,9 @@ class GDF:
         
         [L,B,D,K] = self.evalExtremes()
         
+        if KGn == []:
+            KGn = K
+
         if hasattr(self,'DimOriginal') == False:
             self.DimOriginal = [L,B,D,K]
         
@@ -351,7 +647,7 @@ class GDF:
         
         XCOEF_1_n = [np.array(self.XCOEF_1[jj])*f_L for jj in range(self.Npatch)]
         XCOEF_2_n = [np.array(self.XCOEF_2[jj])*f_B for jj in range(self.Npatch)]
-        XCOEF_3_n = [(np.array(self.XCOEF_3[jj])-K)*f_D for jj in range(self.Npatch)]
+        XCOEF_3_n = [(np.array(self.XCOEF_3[jj])+K)*f_D-KGn for jj in range(self.Npatch)]
                 
         self.XCOEF_1 = XCOEF_1_n
         self.XCOEF_2 = XCOEF_2_n
@@ -359,7 +655,7 @@ class GDF:
         
         [L1,B1,D1,K1] = self.evalExtremes()
         
-        self.props()
+        self.props(T)
         pass
     
     def evalExtremes(self):
@@ -388,20 +684,14 @@ class GDF:
         
         return [L,B,D,KG]
 
-painel = GDF('ship.gdf')
-print(painel.properties.area_total)
 
-import matplotlib.pyplot as plt
 
-plt.figure()
-id_plot = 0
-vertices = painel.properties.vertices[id_plot]
-for fc in painel.properties.faces[id_plot]:
-    x = [vertices[fc[0]][0], vertices[fc[1]][0], vertices[fc[2]][0], vertices[fc[0]][0]]
-    y = [vertices[fc[0]][1], vertices[fc[1]][1], vertices[fc[2]][1], vertices[fc[0]][1]]
-    plt.plot(x, y, '-b')
+# # Example
+# # loading gdf file
+# painel = GDF('ship2.gdf')
 
-for ct in painel.properties.centroide[id_plot]:
-    plt.plot(ct[0], ct[1], 'x')
+# # scale gdf file
+# painel.gdf_scale(300, 40, 20, T=10, KGn=14)
 
-plt.show()
+# # exporting gdf
+# painel.gdf_write('ship_scaled.gdf')
