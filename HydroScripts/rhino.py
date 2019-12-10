@@ -46,10 +46,8 @@ def LWL_ho(arq_gdf, ZPOT, close_rhino=True, path_gdf=[]):
     else:
         strComando = '"C:\\Program Files\\Rhinoceros 5.0 (64-bit)\\System\\Rhino.exe" /nosplash /notemplate /runscript="' + strComando + '" "' + arq_gdf + '"'
     
-    print(strComando)
+    # print(strComando)
     
-
-
     subprocess.run(strComando)
 
     if path_gdf != []:
