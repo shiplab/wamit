@@ -220,16 +220,16 @@ class GDF:
 
             vertices[ii][:,2] = vertices[ii][:,2] + np.abs(KGe) # Move keel to z=0
 
-            z_max = np.max(vertices[ii][:,2])
+            # z_max = np.max(vertices[ii][:,2])
 
-            z_min = np.min(vertices[ii][:,2])
+            # z_min = np.min(vertices[ii][:,2])
 
             z_test = vertices[ii][:,2]
             
             if self.irr[ii] == 0:
                 ## Find faces with all vertices above waterline
                 id_above = z_test[faces[ii]] > T
-                id_all_above = np.sum(id_above,1) == 3
+                # id_all_above = np.sum(id_above,1) == 3
                 id_2_above = np.sum(id_above,1) == 2
                 id_1_above = np.sum(id_above,1) == 1
                 id_all_under = np.sum(id_above,1) == 0
@@ -698,10 +698,16 @@ class GDF:
         
         gdf = open(gdf_name,'w')
 
+        Npat = 0
+        for irr_aux in self.irr:
+            if irr_aux == 0:
+                Npat += 1
+
+
         gdf.write('SCALED GDF FILE\n')
         gdf.write(str(self.ulen) + ' ' + str(self.g) + ' ULEN GRAV\n')
         gdf.write(str(self.Isx) + ' ' + str(self.Isy) + ' ISX  ISY\n')
-        gdf.write(str(np.sum(self.irr)) + ' ' + str(self.IGDEF) + ' NPATCH IGDEF\n')
+        gdf.write(str(Npat) + ' ' + str(self.IGDEF) + ' NPATCH IGDEF\n')
         for ii in range(self.Npatch):
             if self.irr[ii] == 0:
                 gdf.write(str(self.NUG[ii]) + ' ' +  str(self.NVG[ii]) + '\n')
@@ -713,7 +719,7 @@ class GDF:
                     gdf.write(' ' + str(lt) + '\n')
                 
                 for lt in range(len(self.XCOEF_1[ii])):
-                    gdf.write(' ' + str(self.XCOEF_1[ii][lt] + self.properties.CB[0]) +' ' + str(self.XCOEF_2[ii][lt]) + ' ' + str(self.XCOEF_3[ii][lt]) + '\n')
+                    gdf.write(' ' + str(self.XCOEF_1[ii][lt] - self.properties.CB[0]) +' ' + str(self.XCOEF_2[ii][lt]) + ' ' + str(self.XCOEF_3[ii][lt]) + '\n')
                 gdf.write('\n')
         gdf.close()
 
@@ -760,7 +766,7 @@ class GDF:
         self.XCOEF_2 = XCOEF_2_n
         self.XCOEF_3 = XCOEF_3_n
         
-        [L1,B1,D1,K1] = self.evalExtremes()
+        # [L1,B1,D1,K1] = self.evalExtremes()
         
         self.props(T)
         pass

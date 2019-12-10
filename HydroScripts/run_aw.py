@@ -45,3 +45,5 @@ if save_fig == True:
 
 if show_fig:
     plt.show()
+
+print('\n\n')
