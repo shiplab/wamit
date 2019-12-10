@@ -117,4 +117,5 @@ def write_poten_pot(path_out, ZPOT):
     poten.write('1 1 1 1 1 1\n')
     poten.close()
 
-scaled('ship.gdf', 200, 36, 15, 11, 10.2, path_out='WAMIT')
+#debug
+# scaled('ship.gdf', 200, 36, 15, 11, 10.2, path_out='WAMIT')

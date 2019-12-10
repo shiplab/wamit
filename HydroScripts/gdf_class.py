@@ -250,28 +250,45 @@ class GDF:
                     # Case 1
                     if np.array_equal(test_aux, np.array([True, False, False])):
                         
-                        p1_x = np.interp(T, [z_aux[0], z_aux[1]], [x_aux[0], x_aux[1]])
-                        p1_y = np.interp(T, [z_aux[0], z_aux[1]], [y_aux[0], y_aux[1]])
+                        if z_aux[0] < z_aux[1]:
+                            p1_x = np.interp(T, [z_aux[0], z_aux[1]], [x_aux[0], x_aux[1]])
+                            p1_y = np.interp(T, [z_aux[0], z_aux[1]], [y_aux[0], y_aux[1]])
+                        else:
+                            p1_x = np.interp(T, [z_aux[1], z_aux[0]], [x_aux[1], x_aux[0]])
+                            p1_y = np.interp(T, [z_aux[1], z_aux[0]], [y_aux[1], y_aux[0]])
+                        
 
-                        p2_x = np.interp(T, [z_aux[0], z_aux[2]], [x_aux[0], x_aux[2]])
-                        p2_y = np.interp(T, [z_aux[0], z_aux[2]], [y_aux[0], y_aux[2]])
+                        if z_aux[0] < z_aux[0]:
+                            p2_x = np.interp(T, [z_aux[0], z_aux[2]], [x_aux[0], x_aux[2]])
+                            p2_y = np.interp(T, [z_aux[0], z_aux[2]], [y_aux[0], y_aux[2]])
+                        else:
+                            p2_x = np.interp(T, [z_aux[2], z_aux[0]], [x_aux[2], x_aux[0]])
+                            p2_y = np.interp(T, [z_aux[2], z_aux[0]], [y_aux[2], y_aux[0]])
 
                         p1 = np.array([p1_x, p1_y, T])
                         p2 = np.array([p2_x, p2_y, T])
 
                         fc1 = np.array([p1, vtx_aux[1,:], vtx_aux[2,:]])
-                        fc2 = np.array([p1, vtx_aux[1,:], p2])
+                        fc2 = np.array([p1, vtx_aux[2,:], p2])
                         
                         new_faces1.append(fc1)
                         new_faces1.append(fc2)
                     # Case 2
                     elif np.array_equal(test_aux,np.array([False, True, False])):
+                        
+                        if z_aux[0] < z_aux[0]:
+                            p1_x = np.interp(T, [z_aux[0], z_aux[1]], [x_aux[0], x_aux[1]])
+                            p1_y = np.interp(T, [z_aux[0], z_aux[1]], [y_aux[0], y_aux[1]])
+                        else:
+                            p1_x = np.interp(T, [z_aux[1], z_aux[0]], [x_aux[1], x_aux[0]])
+                            p1_y = np.interp(T, [z_aux[1], z_aux[0]], [y_aux[1], y_aux[0]])
 
-                        p1_x = np.interp(T, [z_aux[0], z_aux[1]], [x_aux[0], x_aux[1]])
-                        p1_y = np.interp(T, [z_aux[0], z_aux[1]], [y_aux[0], y_aux[1]])
-
-                        p2_x = np.interp(T, [z_aux[1], z_aux[2]], [x_aux[1], x_aux[2]])
-                        p2_y = np.interp(T, [z_aux[1], z_aux[2]], [y_aux[1], y_aux[2]])
+                        if z_aux[1] < z_aux[2]:
+                            p2_x = np.interp(T, [z_aux[1], z_aux[2]], [x_aux[1], x_aux[2]])
+                            p2_y = np.interp(T, [z_aux[1], z_aux[2]], [y_aux[1], y_aux[2]])
+                        else:
+                            p2_x = np.interp(T, [z_aux[2], z_aux[1]], [x_aux[2], x_aux[1]])
+                            p2_y = np.interp(T, [z_aux[2], z_aux[1]], [y_aux[2], y_aux[1]])
 
                         p1 = np.array([p1_x, p1_y, T])
                         p2 = np.array([p2_x, p2_y, T])
@@ -283,12 +300,19 @@ class GDF:
                         new_faces1.append(fc2)
                     # Case 3
                     else:
+                        if z_aux[0] < z_aux[2]:
+                            p1_x = np.interp(T, [z_aux[0], z_aux[2]], [x_aux[0], x_aux[2]])
+                            p1_y = np.interp(T, [z_aux[0], z_aux[2]], [y_aux[0], y_aux[2]])
+                        else:
+                            p1_x = np.interp(T, [z_aux[2], z_aux[0]], [x_aux[2], x_aux[0]])
+                            p1_y = np.interp(T, [z_aux[2], z_aux[0]], [y_aux[2], y_aux[0]])
 
-                        p1_x = np.interp(T, [z_aux[0], z_aux[2]], [x_aux[0], x_aux[2]])
-                        p1_y = np.interp(T, [z_aux[0], z_aux[2]], [y_aux[0], y_aux[2]])
-
-                        p2_x = np.interp(T, [z_aux[1], z_aux[2]], [x_aux[1], x_aux[2]])
-                        p2_y = np.interp(T, [z_aux[1], z_aux[2]], [y_aux[1], y_aux[2]])
+                        if z_aux[1] < z_aux[2]:
+                            p2_x = np.interp(T, [z_aux[1], z_aux[2]], [x_aux[1], x_aux[2]])
+                            p2_y = np.interp(T, [z_aux[1], z_aux[2]], [y_aux[1], y_aux[2]])
+                        else:
+                            p2_x = np.interp(T, [z_aux[2], z_aux[1]], [x_aux[2], x_aux[1]])
+                            p2_y = np.interp(T, [z_aux[2], z_aux[1]], [y_aux[2], y_aux[1]])
 
                         p1 = np.array([p1_x, p1_y, T])
                         p2 = np.array([p2_x, p2_y, T])
@@ -305,28 +329,28 @@ class GDF:
                 # ax = fig.add_subplot(111, projection='3d') 
                 # nfx = np.reshape(np.array(new_faces1),(len(new_faces1)*3,3))
                 # nfx1 = np.reshape(np.array(vtx_1),(len(vtx_1)*3,3))
-                # ax.scatter(nfx[:,0], nfx[:,1], nfx[:,2], zdir='z', s=20)
-                # ax.scatter(nfx1[:,0], nfx1[:,1], nfx1[:,2], zdir='z', s=20)
-                # for nfxx in new_faces1:
+                # # ax.scatter(nfx[0:3,0], nfx[0:3,1], nfx[0:3,2], zdir='z', s=20)
+                # ax.scatter(nfx1[0:3,0], nfx1[0:3,1], nfx1[0:3,2], zdir='z', s=20)
+                # for nfxx in new_faces1[0:5]:
                 #     ct = [np.mean(nfxx[:,0]), np.mean(nfxx[:,1]), np.mean(nfxx[:,2])]
                 #     ux = [nfxx[1,0] - nfxx[0,0], nfxx[1,1] - nfxx[0,1], nfxx[1,2] - nfxx[0,2]]
                 #     vx = [nfxx[2,0] - nfxx[0,0], nfxx[2,1] - nfxx[0,1], nfxx[2,2] - nfxx[0,2]]
                 #     nx = np.cross(ux,vx)/2
-                #     ax.plot([ct[0], ct[0]+nx[0]], [ct[1], ct[1]+nx[1]], [ct[2],ct[2]+nx[2]], color='black')
+                #     # ax.plot([ct[0], ct[0]+nx[0]], [ct[1], ct[1]+nx[1]], [ct[2],ct[2]+nx[2]], color='black')
                 #     ax.plot(nfxx[[0,1,2,0],0], nfxx[[0,1,2,0],1], nfxx[[0,1,2,0],2], color='blue')
 
-                # for nfxx in vtx_1:
+                # for nfxx in vtx_1[0:3]:
                 #     ct = [np.mean(nfxx[:,0]), np.mean(nfxx[:,1]), np.mean(nfxx[:,2])]
                 #     ux = [nfxx[1,0] - nfxx[0,0], nfxx[1,1] - nfxx[0,1], nfxx[1,2] - nfxx[0,2]]
                 #     vx = [nfxx[2,0] - nfxx[0,0], nfxx[2,1] - nfxx[0,1], nfxx[2,2] - nfxx[0,2]]
                 #     nx = np.cross(ux,vx)/2
-                #     ax.plot([ct[0], ct[0]+nx[0]], [ct[1], ct[1]+nx[1]], [ct[2],ct[2]+nx[2]],color='red')
+                #     # ax.plot([ct[0], ct[0]+nx[0]], [ct[1], ct[1]+nx[1]], [ct[2],ct[2]+nx[2]],color='red')
                 #     ax.plot(nfxx[[0,1,2,0],0], nfxx[[0,1,2,0],1], nfxx[[0,1,2,0],2], color='green')
 
-                # # plt.show()
+                # plt.show()
                 # ############################
 
-                #Panels with 2 vtx above water line
+                # #Panels with 2 vtx above water line
                 vtx_2 = vertices[ii][faces[ii][id_2_above],:]
                 new_faces2 = []
                 for vtx_aux in vtx_2:
@@ -337,11 +361,19 @@ class GDF:
                     # Case 1
                     if np.array_equal(test_aux, np.array([True, True, False])):
                         
-                        p1_x = np.interp(T, [z_aux[0], z_aux[2]], [x_aux[0], x_aux[2]])
-                        p1_y = np.interp(T, [z_aux[0], z_aux[2]], [y_aux[0], y_aux[2]])
+                        if z_aux[0] < z_aux[2]:
+                            p1_x = np.interp(T, [z_aux[0], z_aux[2]], [x_aux[0], x_aux[2]])
+                            p1_y = np.interp(T, [z_aux[0], z_aux[2]], [y_aux[0], y_aux[2]])
+                        else:
+                            p1_x = np.interp(T, [z_aux[2], z_aux[0]], [x_aux[2], x_aux[0]])
+                            p1_y = np.interp(T, [z_aux[2], z_aux[0]], [y_aux[2], y_aux[0]])
 
-                        p2_x = np.interp(T, [z_aux[1], z_aux[2]], [x_aux[1], x_aux[2]])
-                        p2_y = np.interp(T, [z_aux[1], z_aux[2]], [y_aux[1], y_aux[2]])
+                        if z_aux[1] < z_aux[2]:
+                            p2_x = np.interp(T, [z_aux[1], z_aux[2]], [x_aux[1], x_aux[2]])
+                            p2_y = np.interp(T, [z_aux[1], z_aux[2]], [y_aux[1], y_aux[2]])
+                        else:
+                            p2_x = np.interp(T, [z_aux[2], z_aux[1]], [x_aux[2], x_aux[1]])
+                            p2_y = np.interp(T, [z_aux[2], z_aux[1]], [y_aux[2], y_aux[1]])
 
                         p1 = np.array([p1_x, p1_y, T])
                         p2 = np.array([p2_x, p2_y, T])
@@ -352,11 +384,19 @@ class GDF:
                     # Case 2
                     elif np.array_equal(test_aux,np.array([False, True, True])):
 
-                        p1_x = np.interp(T, [z_aux[0], z_aux[1]], [x_aux[0], x_aux[1]])
-                        p1_y = np.interp(T, [z_aux[0], z_aux[1]], [y_aux[0], y_aux[1]])
+                        if z_aux[0] < z_aux[0]:
+                            p1_x = np.interp(T, [z_aux[0], z_aux[1]], [x_aux[0], x_aux[1]])
+                            p1_y = np.interp(T, [z_aux[0], z_aux[1]], [y_aux[0], y_aux[1]])
+                        else:
+                            p1_x = np.interp(T, [z_aux[1], z_aux[0]], [x_aux[1], x_aux[0]])
+                            p1_y = np.interp(T, [z_aux[1], z_aux[0]], [y_aux[1], y_aux[0]])
 
-                        p2_x = np.interp(T, [z_aux[0], z_aux[2]], [x_aux[0], x_aux[2]])
-                        p2_y = np.interp(T, [z_aux[0], z_aux[2]], [y_aux[0], y_aux[2]])
+                        if z_aux[0] < z_aux[0]:
+                            p2_x = np.interp(T, [z_aux[0], z_aux[2]], [x_aux[0], x_aux[2]])
+                            p2_y = np.interp(T, [z_aux[0], z_aux[2]], [y_aux[0], y_aux[2]])
+                        else:
+                            p2_x = np.interp(T, [z_aux[2], z_aux[0]], [x_aux[2], x_aux[0]])
+                            p2_y = np.interp(T, [z_aux[2], z_aux[0]], [y_aux[2], y_aux[0]])
 
                         p1 = np.array([p1_x, p1_y, T])
                         p2 = np.array([p2_x, p2_y, T])
@@ -366,12 +406,19 @@ class GDF:
                         new_faces2.append(fc1)
                     # Case 3
                     else:
+                        if z_aux[1] < z_aux[2]:
+                            p1_x = np.interp(T, [z_aux[1], z_aux[2]], [x_aux[1], x_aux[2]])
+                            p1_y = np.interp(T, [z_aux[1], z_aux[2]], [y_aux[1], y_aux[2]])
+                        else:
+                            p1_x = np.interp(T, [z_aux[2], z_aux[1]], [x_aux[2], x_aux[1]])
+                            p1_y = np.interp(T, [z_aux[2], z_aux[1]], [y_aux[2], y_aux[1]])
 
-                        p1_x = np.interp(T, [z_aux[1], z_aux[2]], [x_aux[1], x_aux[2]])
-                        p1_y = np.interp(T, [z_aux[1], z_aux[2]], [y_aux[1], y_aux[2]])
-
-                        p2_x = np.interp(T, [z_aux[1], z_aux[0]], [x_aux[1], x_aux[0]])
-                        p2_y = np.interp(T, [z_aux[1], z_aux[0]], [y_aux[1], y_aux[0]])
+                        if z_aux[1] < z_aux[0]:
+                            p2_x = np.interp(T, [z_aux[1], z_aux[0]], [x_aux[1], x_aux[0]])
+                            p2_y = np.interp(T, [z_aux[1], z_aux[0]], [y_aux[1], y_aux[0]])
+                        else:
+                            p2_x = np.interp(T, [z_aux[0], z_aux[1]], [x_aux[0], x_aux[1]])
+                            p2_y = np.interp(T, [z_aux[0], z_aux[1]], [y_aux[0], y_aux[1]])
 
                         p1 = np.array([p1_x, p1_y, T])
                         p2 = np.array([p2_x, p2_y, T])
@@ -437,9 +484,8 @@ class GDF:
 
         # plt.show()
         # ############################
-
+        # New mesh properties evaluation
         for ii in range(len(new_faces)):
-            
             normal[ii] = []
             area[ii] = []
             centroid[ii] = []
@@ -447,7 +493,6 @@ class GDF:
             for fc in new_faces[ii]:
                 # Centroide Evaluation
                 centroid[ii].append([np.mean(fc[:,0]), np.mean(fc[:,1]), np.mean(fc[:,2]) - T])
-                
                 # Normal and area evaluation
                 u = [fc[1,0] - fc[0,0], fc[1,1] - fc[0,1], fc[1,2] - fc[0,2]]
                 v = [fc[2,0] - fc[0,0], fc[2,1] - fc[0,1], fc[2,2] - fc[0,2]]
@@ -568,6 +613,7 @@ class GDF:
         print(' ')
         
         # Exporting properties
+        self.properties.new_faces = new_faces
         self.properties.L = L
         self.properties.B = B
         self.properties.D = D
@@ -745,16 +791,46 @@ class GDF:
         
         return [L,B,D,KGe]
 
+    def export_low_order_tri(self, gdf_out, path_out=[]):
+        if path_out != []:
+            # os.mkdir(path_out,exist_ok=True)
+            os.makedirs(path_out, exist_ok=True)
+            gdf_name = path_out + '\\' + gdf_out
+        else:
+            gdf_name = gdf_out
+
+        faces = self.properties.new_faces[0]
+
+        Ntri = len(faces)      
         
+        gdf = open(gdf_name,'w')
+
+        gdf.write('LOW ORDER GDF TRIANGLES FILE\n')
+        gdf.write(str(self.ulen) + ' ' + str(self.g) + ' ULEN GRAV\n')
+        gdf.write(str(self.Isx) + ' ' + str(self.Isy) + ' ISX  ISY\n')
+        gdf.write(str(Ntri) + ' NPATCH \n')
+        for fc in faces:
+            fc1 = np.concatenate((fc, fc[2].reshape((1,3))), axis=0)
+            gdf.write(' ' + np.array2string(fc1, formatter={'float_kind':lambda x: "%.5f" % x}).replace('[','').replace(']',''))
+            gdf.write('\n')
+        gdf.close()
 
 
 
-# # Example
-# # loading gdf file
-# painel = GDF('ship2.gdf')
+
+
+# Example
+# loading gdf file
+painel = GDF('ship.gdf')
+
+# evaluating properties
+painel.props(T=10, KG=10.5)
 
 # # scale gdf file
 # painel.gdf_scale(300, 40, 20, T=10, KG=14)
 
 # # exporting gdf
 # painel.gdf_write('ship_scaled.gdf')
+
+# exporting low order gdf triangles
+painel.export_low_order_tri('ship_tri.gdf')
