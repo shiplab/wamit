@@ -33,11 +33,11 @@ def LWL_ho(arq_gdf, ZPOT, close_rhino=True, path_gdf=[]):
     arqGDF = fileID.writelines(arqGDF)
     fileID.close()
 
-
     strComando = '_SetActiveViewport Front _SelAll _Section -500,' + str(-ZPOT) + ' 500,' + str(-ZPOT) + ' Enter ' +\
-    '_ProjectToCPlane _No _SelNone _SelCrv _-Loft _Simplify None Enter ' +\
-    '_SelWindow 500,' + str(-ZPOT+.1) + ' -500,' + str(-ZPOT-.1) + ' _Dir _flipall  Enter _selnone ' +\
-    '_selsrf _-Export ""' + os.getcwd() + '\\' + arq_gdf + '"" Y Enter'\
+    '_FitCrv _DeleteInpu=Yes _Degree 3 _AngleTolerance 0.1 0.001 Enter _Divide 1 _SelNone '+\
+    '_SelPt _CurveThroughPt _Degree 3 _CurveType Interpolated _Knots Uniform Enter _SelNone ' +\
+    '_SelCrv _-Loft _Simplify None Enter _SelNone ' +\
+    '_SelSrf _-Export ""' + os.getcwd() + '\\' + arq_gdf + '"" Y Enter'\
 
     if close_rhino==True:
         strComando = '"C:\\Program Files\\Rhinoceros 5.0 (64-bit)\\System\\Rhino.exe" /nosplash /notemplate /runscript="' +\

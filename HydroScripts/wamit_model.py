@@ -11,6 +11,15 @@ def scaled(gdf_file, Lf, Bf, Df, T, KG, path_out='WAMIT'):
     write_ship_frc(path_out, ship.properties.Mass, ship.properties.Be)
     write_poten_pot(path_out, ship.properties.ZPOT)
 
+def model(gdf_file, T, KG, path_out='WAMIT'):
+    ship = gdf_class.GDF(gdf_file)
+    ship.props(T, KG)
+    ship.gdf_write('ship.gdf', path_out, LWL_rhino=True)
+    write_config_wam(path_out)
+    write_fnames_wam(path_out)
+    write_force_frc(path_out)
+    write_ship_frc(path_out, ship.properties.Mass, ship.properties.Be)
+    write_poten_pot(path_out, ship.properties.ZPOT)
 
 def write_config_wam(path_out):
     ## Config.wam
