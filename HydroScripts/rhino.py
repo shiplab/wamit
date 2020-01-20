@@ -5,7 +5,7 @@ import os
 
 def LWL_ho(arq_gdf, ZPOT, close_rhino=True, path_gdf=[]):
     # LWL_ho function to create panel IRR=1 using Rhino 5
-    # installed on standard folde "C:\Program Files\Rhinoceros 5.0 (64-bit)\System\Rhino.exe"
+    # installed on standard folder "C:\Program Files\Rhinoceros 5.0 (64-bit)\System\Rhino.exe"
     #
     # Important: This works only with high order model with Y symmetry and unique ship surface
     #

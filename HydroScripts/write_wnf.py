@@ -22,7 +22,7 @@ dt = val
 
 p_out = analysis_wamit.output_params()
 
-[params,axis,vol,cb,cg,rest_coef,name_out] = p_out
+[params,axis,vol,cb,cg,rest_coef,name_out,GM,GMl] = p_out
 
 [g,ulen, rho, water_depth, water_depth_aux, NBODY] = params
 

@@ -141,7 +141,7 @@ def output_params():
         print('  GMt = {:.2f} m'.format(GMt[ii]))
         print('  GMl = {:.2f} m'.format(GMl[ii]))
     
-    return [params,axis,vol,cb,cg,rest_coef,nome_out]
+    return [params, axis, vol, cb, cg, rest_coef, nome_out, GMt, GMl]
     
 def read_frc():
     # Read main file FRC to search for FRC files names
