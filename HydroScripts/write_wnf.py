@@ -112,7 +112,17 @@ for ii in range(NBODY):
     tx_inc = 12*' '
     
     for x in inc:
-        aux = '{:.0f}'.format(x)
+        n_dec = 0
+        z = x % 1
+        while z != 0:
+            n_dec = n_dec + 1
+            z = z*10 % 1
+            # print(n_dec)
+            # print(z)
+
+        aux = '{:.' + '{:d}'.format(n_dec) +'f}'
+        # print(aux)
+        aux = aux.format(x)
         n_carac = len(aux)
         tx_inc = tx_inc + (16-n_carac)*' ' + aux
         

@@ -471,7 +471,7 @@ def added_mass_pot_damping(plota=0, dof_plot=[1,2,3,4,5,6], multi_fig=False, T_l
             aux2.append(arq1d[(arq1d[:, 1] == x[0]) & (arq1d[:, 2] == x[1]) & (arq1d[:, 0] == jj),4])
         added_mass.append(aux)
         pot_damp.append(aux2)
-        
+        # print(x)
         if (x == [3,3]).all() or (x == [3,5]).all() or (x == [4,4]).all() or (x == [5,3]).all() or (x == [5,5]).all():
             aux_mad_matrix.append(np.mean([np.mean(aux),np.max(aux)]))
             aux_pdamp_matrix.append(np.mean([np.mean(aux2),np.max(aux2)]))
