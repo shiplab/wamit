@@ -22,7 +22,7 @@ dt = val
 
 p_out = analysis_wamit.output_params()
 
-[params,axis,vol,cb,cg,rest_coef,name_out,GM,GMl] = p_out
+[params, axis, vol, cb, cg, rest_coef, nome_out, GMt, GMl, M, Bvisc, C, Cext] = p_out
 
 [g,ulen, rho, water_depth, water_depth_aux, NBODY] = params
 
@@ -61,7 +61,7 @@ for ii in range(NBODY):
             namesDof.append(nd)
         
     # Write parameters in ship.wnf
-    name_wnf = 'ship{:d}.wnf'.format(ii + 1)
+    name_wnf = 'ship{:d}_tpn.wnf'.format(ii + 1)
     wnf = open(name_wnf,'w')
     wnf.write('%VERSION\n')
     wnf.write('2.1.4\n\n')

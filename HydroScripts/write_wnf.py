@@ -22,7 +22,7 @@ dt = val
 
 p_out = analysis_wamit.output_params()
 
-[params,axis,vol,cb,cg,rest_coef,name_out,GM,GMl] = p_out
+[params, axis, vol, cb, cg, rest_coef, nome_out, GMt, GMl, M, Bvisc, C, Cext] = p_out
 
 [g,ulen, rho, water_depth, water_depth_aux, NBODY] = params
 
@@ -33,8 +33,6 @@ p_out = analysis_wamit.output_params()
 [wforce, wforce_phase, arq2d] = analysis_wamit.wave_forces(param_out=p_out)
     
 # Reading Drift forces ('m' - Momentum, 'p' - Pressure, 'c' - control surface)
-
-
 [wdforce, wdforce_phase, arq8d] = analysis_wamit.drift_forces(drift_analysis_type = dt, param_out=p_out)
 
 # Reading Added Mass and Potential Damping
@@ -54,17 +52,17 @@ for ii in range(NBODY):
     [mass,damp,rest_coef_ext] = analysis_wamit.read_frc()
     
     # Names of Degrees of Freedom
-    naemsDof_aux = ['SURGE','SWAY','HEAVE','ROLL','PITCH','YAW']
+    namesDof_aux = ['SURGE','SWAY','HEAVE','ROLL','PITCH','YAW']
     namesDof=[]
     for nn in range(NBODY):
-        for nd in naemsDof_aux:
+        for nd in namesDof_aux:
             namesDof.append(nd)
         
     # Write parameters in ship.wnf
-    name_wnf = 'ship{:d}.wnf'.format(ii + 1)
+    name_wnf = 'ship{:d}_sim.wnf'.format(ii + 1)
     wnf = open(name_wnf,'w')
     wnf.write('%OUT_FILE\n')
-    wnf.write('"'+name_out+'"\n\n')
+    wnf.write('"' + nome_out + '"\n\n')
     wnf.write('%NUMBER_OF_BODIES\n')
     wnf.write(str(NBODY) + '\n\n')
     wnf.write('%BODY\n')

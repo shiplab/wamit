@@ -1,4 +1,5 @@
 import os.path
+import os
 import matplotlib.pyplot as plt
 
 if os.path.isfile('input_aw.txt'):
@@ -45,5 +46,9 @@ if save_fig == True:
 
 if show_fig:
     plt.show()
+
+if wnf_drift == True:
+    os.system('python -m write_wnf ' + drift_analysis[0])
+    os.system('python -m write_wnf_tpn ' + drift_analysis[0])
 
 print('\n\n')

@@ -97,14 +97,14 @@ def output_params():
     
     dof_rest_coef =[[3,3],[3,4],[3,5],[4,4],[4,5],[4,6],[5,5],[5,6]]
 
-
     frc_out = read_frc() #substitute by read_mmx after
-    C=[]
-    Cext=[]
-    M=[]
-    Mass=[]
-    GMt=[]
-    GMl=[]
+    C = []
+    Cext = []
+    M = []
+    Mass = []
+    Bvisc = []
+    GMt = []
+    GMl = []
     for ii in range(NBODY):
         C.append(np.zeros((6,6)))
         cont=0
@@ -113,7 +113,7 @@ def output_params():
             cont+=1
         
         M.append(frc_out[0][ii])
-    
+        Bvisc.append(frc_out[1][ii])
         Mass.append(M[ii][0,0])
         Cext.append(frc_out[2][ii])
     
@@ -141,7 +141,7 @@ def output_params():
         print('  GMt = {:.2f} m'.format(GMt[ii]))
         print('  GMl = {:.2f} m'.format(GMl[ii]))
     
-    return [params, axis, vol, cb, cg, rest_coef, nome_out, GMt, GMl]
+    return [params, axis, vol, cb, cg, rest_coef, nome_out, GMt, GMl, M, Bvisc, C, Cext]
     
 def read_frc():
     # Read main file FRC to search for FRC files names
@@ -506,6 +506,55 @@ def added_mass_pot_damping(plota=0, dof_plot=[1,2,3,4,5,6], multi_fig=False, T_l
     print('')
     print(' * Added Mass and Potential Damping')
     return [added_mass, pot_damp, dof1, arq1d, added_mass_matrix, pot_damp_matrix]
+
+def dynamic_params(param_out, mad):
+    # function to evaluate the dynamic parameter as Naturl Periods, Viscous Damping coefs
+    print(' * Evaluating Dynamic Parameters')
+
+    # [params, axis, vol, cb, cg, rest_coef, nome_out, GMt, GMl, M, Bvisc, C, Cext] = param_out
+    # [added_mass, pot_damp, dof1, arq1d, added_mass_matrix, pot_damp_matrix] = mad
+
+    NBODY = param_out[0][5]
+    M = param_out[9]
+    Bvisc = param_out[10]
+    C = param_out[11]
+    Cext = param_out[12]
+    MA = mad[4]
+    Bpot = mad[5]
+
+    Tn = []
+    Bc = []
+    ca = []
+    cv = []
+    for jj in range(NBODY):
+        tn_aux = []
+        bc_aux = []
+        cv_aux = []
+        ca_aux = []
+        print('BODY ' + str(jj+1))
+        for ii in range(6):
+            if (C[jj][ii][ii] + Cext[jj][ii][ii]) != 0:
+                tn_aux.append(2 * np.pi * np.sqrt( (M[jj][ii][ii] + MA[ii][ii]) / (C[jj][ii][ii] + Cext[jj][ii][ii]) ))
+                bc_aux.append(2 * np.sqrt( (M[jj][ii][ii] + MA[ii][ii]) * (C[jj][ii][ii] + Cext[jj][ii][ii]) ))
+                cv_aux.append(Bvisc[jj][ii][ii] / bc_aux[ii])
+                ca_aux.append((Bvisc[jj][ii][ii] + Bpot[ii][ii]) / bc_aux[ii])
+            else:
+                tn_aux.append(0.0)
+                bc_aux.append(0.0)
+                cv_aux.append(0.0)
+                ca_aux.append(0.0)
+            print(' M_' + str(ii+1) + ' = {:.2f}'.format(M[jj][ii][ii]) + \
+                ' MA_' + str(ii+1) + ' = {:.2f}'.format(MA[ii][ii]) + \
+                ' C_' + str(ii+1) + ' = {:.2f}'.format((C[jj][ii][ii] + Cext[jj][ii][ii])) + \
+                ' Tn_' + str(ii+1) + ' = {:.2f}'.format(tn_aux[ii]) + \
+                ' Bpot_' + str(ii+1) + ' = {:.2f}'.format(Bpot[ii][ii]) + \
+                ' Bvisc_' + str(ii+1) + ' = {:.2f}'.format(Bvisc[jj][ii][ii]) + \
+                ' cv_' + str(ii+1) + ' = {:.2f}'.format(cv_aux[ii]) + \
+                ' ca_' + str(ii+1) + ' = {:.2f}'.format(ca_aux[ii])  )
+
+
+
+
 
 def point_rao(points):
     # function to evaluate the rao in specific points    
