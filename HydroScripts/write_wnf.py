@@ -57,9 +57,11 @@ for ii in range(NBODY):
     for nn in range(NBODY):
         for nd in namesDof_aux:
             namesDof.append(nd)
-        
+
+    sufix = {'m':'_mom', 'p':'_press', 'c': '_csf'}
+
     # Write parameters in ship.wnf
-    name_wnf = 'ship{:d}_sim.wnf'.format(ii + 1)
+    name_wnf = 'ship{:d}'.format(ii + 1)  + '_sim' + sufix[dt] + '.wnf'
     wnf = open(name_wnf,'w')
     wnf.write('%OUT_FILE\n')
     wnf.write('"' + nome_out + '"\n\n')

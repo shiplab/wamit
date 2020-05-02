@@ -28,6 +28,9 @@ if wave_forces:
 if rao:
     r = analysis_wamit.raos(plota=1, dof_plot=dof_plot, inc_plot=inc_plot, multi_fig=True, T_lim=T_lim, param_out=p_out)
 
+# if damped_rao:
+#     dr = analysis_wamit.damped_rao(param_out=p_out, mad = a, wf = w)
+
 if drift:
     dof_aux=[]
     for dof in dof_plot:

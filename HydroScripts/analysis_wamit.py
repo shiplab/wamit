@@ -267,7 +267,6 @@ def raos(plota=0, dof_plot=[1,2,3,4,5,6], inc_plot=[0,45,90,135,180], multi_fig=
 
     return [rao, rao_phase, per, inc, dof, arq4d, rao_c]
 
-
 def wave_forces(plota=0,dof_plot=[1,2,3,4,5,6],inc_plot=[0,45,90,135,180],multi_fig=False, T_lim = [0, 25], param_out=[]):
 
     if not param_out:
@@ -552,9 +551,9 @@ def dynamic_params(param_out, mad):
                 ' cv_' + str(ii+1) + ' = {:.2f}'.format(cv_aux[ii]) + \
                 ' ca_' + str(ii+1) + ' = {:.2f}'.format(ca_aux[ii])  )
 
-
-
-
+                # RAO = F / [-(M+A)*w^2 + (B+Bext)*w + (K+Kext)]
+    # 1- Evaluate the critical damping
+    # 2- Evaluate the matrices M, A, B, Bext, K and Kext
 
 def point_rao(points):
     # function to evaluate the rao in specific points    

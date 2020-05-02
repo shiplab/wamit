@@ -60,8 +60,10 @@ for ii in range(NBODY):
         for nd in naemsDof_aux:
             namesDof.append(nd)
         
+    sufix = {'m':'_mom', 'p':'_press', 'c': '_csf'}
+
     # Write parameters in ship.wnf
-    name_wnf = 'ship{:d}_tpn.wnf'.format(ii + 1)
+    name_wnf = 'ship{:d}'.format(ii + 1)  + '_tpn' + sufix[dt] + '.wnf'
     wnf = open(name_wnf,'w')
     wnf.write('%VERSION\n')
     wnf.write('2.1.4\n\n')
