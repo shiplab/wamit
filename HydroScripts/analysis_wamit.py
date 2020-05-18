@@ -2,7 +2,6 @@ import numpy as np
 import re
 import math
 from plot_curves import plot_curves
-from tabulate import tabulate
 
 def read_ULEN():
     nome_out = 'force.out'
@@ -98,13 +97,12 @@ def output_params():
     
     dof_rest_coef =[[3,3],[3,4],[3,5],[4,4],[4,5],[4,6],[5,5],[5,6]]
 
-    # frc_out = read_frc() #substitute by read_mmx after
-    [M, Bvisc, Cext] = read_mmx()
+    frc_out = read_frc() #substitute by read_mmx after
     C = []
-    # Cext = []
-    # M = []
+    Cext = []
+    M = []
     Mass = []
-    # Bvisc = []
+    Bvisc = []
     GMt = []
     GMl = []
     for ii in range(NBODY):
@@ -114,19 +112,16 @@ def output_params():
             C[ii][x[0]-1,x[1]-1] = rest_coef[ii][cont]
             cont+=1
         
-        # M.append(frc_out[0][ii])
-        # Bvisc.append(frc_out[1][ii])
-        Mass.append(M[ (ii)*6 , (ii)*6])
-        # print("Massa = %f" % Mass[ii])
-        # Cext.append(frc_out[2][ii])
+        M.append(frc_out[0][ii])
+        Bvisc.append(frc_out[1][ii])
+        Mass.append(M[ii][0,0])
+        Cext.append(frc_out[2][ii])
     
         for i in [3,4]:
             if i == 3:
-                # GMt.append((C[ii][i,i]+Cext[ii][i,i])/(Mass[ii]*g)) 
-                GMt.append((C[ii][i,i])/(Mass[ii]*g)) 
+                GMt.append((C[ii][i,i]+Cext[ii][i,i])/(Mass[ii]*g)) 
             elif i == 4:
-                # GMl.append((C[ii][i,i]+Cext[ii][i,i])/(Mass[ii]*g))
-                GMl.append((C[ii][i,i])/(Mass[ii]*g))     
+                GMl.append((C[ii][i,i]+Cext[ii][i,i])/(Mass[ii]*g))    
     print('')     
     print('** WAMIT OUTPUT PARAMETERS - HYDROSCRIPTS **')
     print('') 
@@ -147,77 +142,7 @@ def output_params():
         print('  GMl = {:.2f} m'.format(GMl[ii]))
     
     return [params, axis, vol, cb, cg, rest_coef, nome_out, GMt, GMl, M, Bvisc, C, Cext]
-
-def read_mmx():
-   
-    name_mmx = 'force.mmx'
-    arq_mmx_aux = open(name_mmx, 'r')
-    arq_mmx = arq_mmx_aux.readlines()
-    arq_mmx_aux.close()
-
-    N_rows = len(arq_mmx)
     
-    cont = 1
-    pos = []
-    for x in arq_mmx:
-        # print(cont)
-        # print(x)
-        if 'External force matrices:' in x:
-            pos.append(cont)
-        cont = cont+1
-    # print(pos)
-
-    cont = 1
-    MMi = []
-    BBi = []
-    KKi = []
-    tamanho_m = []
-    for ii in range(len(pos)):
-        arq_mmx_aux = open(name_mmx, 'r')
-        # I, J, MM_aux, BB_aux, KK_aux = np.loadtxt(arq_mmx_aux, skiprows=pos+1, unpack=True, max)
-        if len(pos) == cont:
-            I, J, MM_aux, BB_aux, KK_aux = np.genfromtxt(arq_mmx_aux, skip_header=pos[ii]+1, unpack=True)
-        else:
-            I, J, MM_aux, BB_aux, KK_aux = np.genfromtxt(arq_mmx_aux, skip_header=pos[ii]+1, unpack=True, skip_footer=N_rows-(pos[ii+1]-6))
-
-        arq_mmx_aux.close()
-
-        N_dof = int(np.max(I))
-
-        MMi.append(np.zeros((N_dof, N_dof)))
-        BBi.append(np.zeros((N_dof, N_dof)))
-        KKi.append(np.zeros((N_dof, N_dof)))
-
-        for i, j, mm, bb, kk in zip(I, J, MM_aux, BB_aux, KK_aux):
-            MMi[cont-1][int(i)-1, int(j)-1] = mm
-            BBi[cont-1][int(i)-1, int(j)-1] = bb
-            KKi[cont-1][int(i)-1, int(j)-1] = kk
-
-        tamanho_m.append(len(KKi[cont-1]))
-        # print("M - Body %d" % cont)
-        # print(tabulate(MMi[cont-1], floatfmt=".2e", tablefmt="fancy_grid"))
-        # print("B - Body %d" % cont)
-        # print(tabulate(BBi[cont-1], floatfmt=".2e", tablefmt="fancy_grid"))
-        # print("K - Body %d" % cont)
-        # print(tabulate(KKi[cont-1], floatfmt=".2e", tablefmt="fancy_grid"))
-
-        cont = cont+1
-
-    N_total = np.sum(tamanho_m)
-    MM = np.zeros((N_total, N_total))
-    BB = np.zeros((N_total, N_total))
-    KK = np.zeros((N_total, N_total))
-    idx = 0
-    for mm, bb, kk, tt in zip(MMi, BBi, KKi, tamanho_m):
-        MM[idx:idx+tt, idx:idx+tt] = mm
-        BB[idx:idx+tt, idx:idx+tt] = bb
-        KK[idx:idx+tt, idx:idx+tt] = kk
-        idx = idx + tt
-
-
-    return [MM, BB, KK]
-
-
 def read_frc():
     # Read main file FRC to search for FRC files names
     name_main_frc = 'force.frc'
@@ -582,7 +507,7 @@ def added_mass_pot_damping(plota=0, dof_plot=[1,2,3,4,5,6], multi_fig=False, T_l
     return [added_mass, pot_damp, dof1, arq1d, added_mass_matrix, pot_damp_matrix]
 
 def dynamic_params(param_out, mad):
-    # function to evaluate the dynamic parameter as Natural Periods, Viscous Damping coefs
+    # function to evaluate the dynamic parameter as Naturl Periods, Viscous Damping coefs
     print(' * Evaluating Dynamic Parameters')
 
     # [params, axis, vol, cb, cg, rest_coef, nome_out, GMt, GMl, M, Bvisc, C, Cext] = param_out

@@ -11,7 +11,9 @@ val=dt
 
 while (val != 'm') & (val != 'p') & (val != 'c'):
     val = input('Drift Analysis: [''m'',''p'',''c'']: ')
-    # print(val != 'm')
+    print(val != 'm')
+    print(val != 'p')
+    print(val != 'c')
     
 dt = val
 
@@ -23,9 +25,6 @@ p_out = analysis_wamit.output_params()
 [params, axis, vol, cb, cg, rest_coef, nome_out, GMt, GMl, M, Bvisc, C, Cext] = p_out
 
 [g,ulen, rho, water_depth, water_depth_aux, NBODY] = params
-
-if NBODY > 1 and dt == 'm':
-    raise NameError('For multiple bodies the drift analysis must be Pressure or Control Surface!')
 
 # Reading RAO
 [rao, rao_phase, per, inc, dof, arq4d, rao_c] = analysis_wamit.raos(param_out=p_out)
@@ -39,10 +38,10 @@ if NBODY > 1 and dt == 'm':
 # Reading Added Mass and Potential Damping
 [added_mass, pot_damp, dof1, arq1d, added_mass_matrix, pot_damp_matrix]= analysis_wamit.added_mass_pot_damping(param_out=p_out)
 
-dof=np.reshape(dof, (int(np.max(dof)/6), 6))
+dof=np.reshape(dof,(NBODY,6))
 
-[M,Bvisc,Cext] = analysis_wamit.read_mmx()
-for ii in range(len(dof)):
+
+for ii in range(NBODY):
     [xbody,ybody,zbody,phibody] = axis[ii]
     [xvol,yvol,zvol] = vol[ii]
     [xb,yb,zb] = cb[ii]
@@ -50,11 +49,7 @@ for ii in range(len(dof)):
     [c33,c34,c35,c44,c45,c46,c55,c56] = rest_coef[ii]
 
     # Reading Force file 
-    # [mass,damp,rest_coef_ext] = analysis_wamit.read_frc()
-    pi = ii*6
-    pf = ii*6+6
-    mass = M[pi:pf, pi:pf]
-    damp = Bvisc[pi:pf, pi:pf]
+    [mass,damp,rest_coef_ext] = analysis_wamit.read_frc()
     
     # Names of Degrees of Freedom
     namesDof_aux = ['SURGE','SWAY','HEAVE','ROLL','PITCH','YAW']
@@ -84,7 +79,7 @@ for ii in range(len(dof)):
     #wnf.write('{:.1f}'.format(np.mean([xvol,yvol,zvol]))+'\n\n') #mean volume
     wnf.write('{:.1f}'.format(xvol)+'\n\n')
     wnf.write('%DISPLACEMENT_WEIGHT\n')
-    wnf.write('{:.1f}'.format(mass[0][0])+'\n\n')
+    wnf.write('{:.1f}'.format(mass[ii][0][0])+'\n\n')
     wnf.write('%FLOAT_CENTER\n')
     wnf.write('{:.6f}'.format(xb)+' '+'{:.6f}'.format(yb)+' '+'{:.6f}'.format(zb)+'\n\n')
     wnf.write('%WAMIT_AXIS\n')
@@ -100,13 +95,13 @@ for ii in range(len(dof)):
         
     wnf.write('%GLOBAL_MASS\n')
     
-    for i in mass:
+    for i in mass[ii]:
         wnf.write('    '.join('{:.5e}'.format(x) for x in i)+'\n')
         
     wnf.write('\n')
     wnf.write('%EXTERNAL_DAMPING\n')
     
-    for i in damp:
+    for i in damp[ii]:
         wnf.write('    '.join('{:.5e}'.format(x) for x in i)+'\n')
         
     wnf.write('\n')
@@ -263,5 +258,5 @@ for ii in range(len(dof)):
     wnf.close()
 
 print('')
-print(' * Generated SIMULATOR WNF file(s)' )
+print(' * Generated WNF file(s)' )
 print('')
