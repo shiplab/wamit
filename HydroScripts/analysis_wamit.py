@@ -117,7 +117,7 @@ def output_params():
         # M.append(frc_out[0][ii])
         # Bvisc.append(frc_out[1][ii])
         Mass.append(M[ (ii)*6 , (ii)*6])
-        print("Massa = %f" % Mass[ii])
+        # print("Massa = %f" % Mass[ii])
         # Cext.append(frc_out[2][ii])
     
         for i in [3,4]:
