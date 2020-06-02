@@ -1,6 +1,7 @@
 import os.path
 import os
 import matplotlib.pyplot as plt
+import write_wnf as wnf
 
 if os.path.isfile('input_aw.txt'):
     input = open('input_aw.txt','r')
@@ -51,7 +52,9 @@ if show_fig:
     plt.show()
 
 if wnf_drift == True:
-    os.system('python -m write_wnf ' + drift_analysis[0])
-    os.system('python -m write_wnf_tpn ' + drift_analysis[0])
+    # os.system('python -m write_wnf ' + drift_analysis[0])
+    # os.system('python -m write_wnf_tpn ' + drift_analysis[0])
+    wnf.wnf_sim(p_out, a, w, r, d, dt)
+    wnf.wnf_tpn(p_out, a, w, r, d, dt)
 
-print('\n\n')
+print('\n')
