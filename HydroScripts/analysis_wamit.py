@@ -104,6 +104,9 @@ def output_params():
     # Cext = []
     # M = []
     Mass = []
+    Ixx = []
+    Iyy = []
+    Izz = []
     # Bvisc = []
     GMt = []
     GMl = []
@@ -112,11 +115,13 @@ def output_params():
         cont=0
         for x in dof_rest_coef:
             C[ii][x[0]-1,x[1]-1] = rest_coef[ii][cont]
-            cont+=1
-        
+            cont+=1       
         # M.append(frc_out[0][ii])
         # Bvisc.append(frc_out[1][ii])
         Mass.append(M[ (ii)*6 , (ii)*6])
+        Ixx.append(M[  (ii)*6 + 3, (ii)*6 + 3])
+        Iyy.append(M[  (ii)*6 + 4, (ii)*6 + 4])
+        Izz.append(M[  (ii)*6 + 5, (ii)*6 + 5])
         # print("Massa = %f" % Mass[ii])
         # Cext.append(frc_out[2][ii])
     
@@ -140,6 +145,7 @@ def output_params():
         print('Body N = {:d}'.format(ii+1))
         print('  Vols = ' + '[' + ', '.join(["{:.2f}".format(v) for v in vol[ii]]) + '] m^3')
         print('  Mass = {:.2f} t'.format(Mass[ii]))
+        print('  I = [{:.4e}'. format(Ixx[ii]) + ', {:.4e}'.format(Iyy[ii]) +  ', {:.4e}] t.m^2'.format(Izz[ii]))
         print('  CoB = ' + '[' + ', '.join(["{:.2f}".format(v) for v in cb[ii]]) + '] m')
         print('  CoG = ' + '[' + ', '.join(["{:.2f}".format(v) for v in cg[ii]]) + '] m')
         print('  Wamit Axis = ' + '[' + ', '.join(["{:.2f}".format(v) for v in axis[ii]]) + '] m')      
@@ -178,7 +184,8 @@ def read_mmx():
         if len(pos) == cont:
             I, J, MM_aux, BB_aux, KK_aux = np.genfromtxt(arq_mmx_aux, skip_header=pos[ii]+1, unpack=True)
         else:
-            I, J, MM_aux, BB_aux, KK_aux = np.genfromtxt(arq_mmx_aux, skip_header=pos[ii]+1, unpack=True, skip_footer=N_rows-(pos[ii+1]-6))
+            print((pos[ii+1]-7)-(pos[ii]+1))
+            I, J, MM_aux, BB_aux, KK_aux = np.genfromtxt(arq_mmx_aux, skip_header=pos[ii]+1, unpack=True, max_rows=(pos[ii+1]-7)-(pos[ii]+1))
 
         arq_mmx_aux.close()
 
