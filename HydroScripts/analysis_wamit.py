@@ -424,19 +424,20 @@ def drift_forces(plota=0, drift_analysis_type = 'm', dof_plot=[1,2,6], inc_plot=
     if not param_out:
         param_out = output_params()
 
-    arq8 = np.loadtxt(arq_name)
-    ULEN = param_out[0][1]
+    arq8 = np.loadtxt(arq_name) # read the selected drift file
+    ULEN = param_out[0][1]      # read ULEN
     NBODY = param_out[0][5]
     # Unique with no sort
     _, idx = np.unique(arq8[:, 0], return_index=True)
-    per = np.array([arq8[index, 0] for index in sorted(idx)])
+    per = np.array([arq8[index, 0] for index in sorted(idx)]) # unique period vector
 
-    inc = np.unique(arq8[:, 1])
+    inc = np.unique(arq8[:, 1]) #
     dof = np.unique(arq8[:, 3])
     dof = dof[dof>0]
 
     dim = np.ones(arq8.shape)
 
+    # degrees of freedom to dimensioning
     dof_aux = np.arange(1, dof.max()+1)
     dof_aux = dof_aux.reshape((-1, 6))
     dof_aux = dof_aux[:, [3, 4, 5]]

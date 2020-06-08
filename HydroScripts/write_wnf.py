@@ -127,7 +127,7 @@ def wnf_sim(p_out, a, w, r, d, dt):
             
             for i in range(per.size):
                 tx_rao = '{:.6e}'.format(2*np.pi/per[i])
-                for x in rao_phase[j][i]:
+                for x in rao_phase[ int(dof[ii][j])-1 ][i]:
                     aux = '{:.6e}'.format(x)
                     n_carac = len(aux) 
                     tx_rao = tx_rao + (16-n_carac)*' ' + aux 
@@ -141,7 +141,7 @@ def wnf_sim(p_out, a, w, r, d, dt):
             
             for i in range(per.size):
                 tx_rao = '{:.6e}'.format(2*np.pi/per[i])
-                for x in wforce[int(dof[ii][j])-1][i]:
+                for x in wforce[ int(dof[ii][j])-1 ][i]:
                     aux = '{:.6e}'.format(x)
                     n_carac = len(aux) 
                     tx_rao = tx_rao + (16-n_carac)*' ' + aux 
@@ -152,7 +152,7 @@ def wnf_sim(p_out, a, w, r, d, dt):
             
             for i in range(per.size):
                 tx_rao = '{:.6e}'.format(2*np.pi/per[i])
-                for x in wforce_phase[j][i]:
+                for x in wforce_phase[ int(dof[ii][j])-1 ][i]:
                     aux = '{:.6e}'.format(x)
                     n_carac = len(aux) 
                     tx_rao = tx_rao + (16-n_carac)*' ' + aux 
@@ -166,7 +166,7 @@ def wnf_sim(p_out, a, w, r, d, dt):
             
             for i in range(per.size):
                 tx_rao = '{:.6e}'.format(2*np.pi/per[i])
-                for x in wdforce[int(dof[ii][j])-1][i]:
+                for x in wdforce[ int(dof[ii][j])-1 ][i]:
                     aux = '{:.6e}'.format(x)
                     n_carac = len(aux) 
                     tx_rao = tx_rao + (16-n_carac)*' ' + aux 
@@ -178,7 +178,7 @@ def wnf_sim(p_out, a, w, r, d, dt):
             
             for i in range(per.size):
                 tx_rao = '{:.6e}'.format(2*np.pi/per[i])
-                for x in wdforce_phase[j][i]:
+                for x in wdforce_phase[ int(dof[ii][j])-1 ][i]:
                     aux = '{:.6e}'.format(x)
                     n_carac = len(aux) 
                     tx_rao = tx_rao + (16-n_carac)*' ' + aux 
@@ -381,7 +381,7 @@ def wnf_tpn(p_out, a, w, r, d, dt):
             
             for i in range(per.size):
                 tx_rao = '{:.5e}'.format(2*np.pi/per[i])
-                for x in rao_phase[j][i]:
+                for x in rao_phase[ int(dof[ii][j])-1 ][i]:
                     aux = '{:.5e}'.format(x)
                     n_carac = len(aux) 
                     tx_rao = tx_rao + (16-n_carac)*' ' + aux 
@@ -395,7 +395,7 @@ def wnf_tpn(p_out, a, w, r, d, dt):
             
             for i in range(per.size):
                 tx_rao = '{:.5e}'.format(2*np.pi/per[i])
-                for x in wforce[int(dof[ii][j])-1][i]:
+                for x in wforce[ int(dof[ii][j])-1 ][i]:
                     aux = '{:.5e}'.format(x)
                     n_carac = len(aux) 
                     tx_rao = tx_rao + (16-n_carac)*' ' + aux 
@@ -406,7 +406,7 @@ def wnf_tpn(p_out, a, w, r, d, dt):
             
             for i in range(per.size):
                 tx_rao = '{:.5e}'.format(2*np.pi/per[i])
-                for x in wforce_phase[j][i]:
+                for x in wforce_phase[ int(dof[ii][j])-1 ][i]:
                     aux = '{:.5e}'.format(x)
                     n_carac = len(aux) 
                     tx_rao = tx_rao + (16-n_carac)*' ' + aux 
@@ -420,7 +420,7 @@ def wnf_tpn(p_out, a, w, r, d, dt):
             
             for i in range(per.size):
                 tx_rao = '{:.5e}'.format(2*np.pi/per[i])
-                for x in wdforce[int(dof[ii][j])-1][i]:
+                for x in wdforce[ int(dof[ii][j])-1 ][i]:
                     aux = '{:.5e}'.format(x)
                     n_carac = len(aux) 
                     tx_rao = tx_rao + (16-n_carac)*' ' + aux 
@@ -432,7 +432,7 @@ def wnf_tpn(p_out, a, w, r, d, dt):
             
             for i in range(per.size):
                 tx_rao = '{:.5e}'.format(2*np.pi/per[i])
-                for x in wdforce_phase[j][i]:
+                for x in wdforce_phase[ int(dof[ii][j])-1 ][i]:
                     aux = '{:.5e}'.format(x)
                     n_carac = len(aux) 
                     tx_rao = tx_rao + (16-n_carac)*' ' + aux 
