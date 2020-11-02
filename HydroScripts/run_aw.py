@@ -1,5 +1,7 @@
 import os.path
+import os
 import matplotlib.pyplot as plt
+import write_wnf as wnf
 
 if os.path.isfile('input_aw.txt'):
     input = open('input_aw.txt','r')
@@ -27,6 +29,9 @@ if wave_forces:
 if rao:
     r = analysis_wamit.raos(plota=1, dof_plot=dof_plot, inc_plot=inc_plot, multi_fig=True, T_lim=T_lim, param_out=p_out)
 
+# if damped_rao:
+#     dr = analysis_wamit.damped_rao(param_out=p_out, mad = a, wf = w)
+
 if drift:
     dof_aux=[]
     for dof in dof_plot:
@@ -46,4 +51,10 @@ if save_fig == True:
 if show_fig:
     plt.show()
 
-print('\n\n')
+if wnf_drift == True:
+    # os.system('python -m write_wnf ' + drift_analysis[0])
+    # os.system('python -m write_wnf_tpn ' + drift_analysis[0])
+    wnf.wnf_sim(p_out, a, w, r, d, dt)
+    wnf.wnf_tpn(p_out, a, w, r, d, dt)
+
+print('\n')

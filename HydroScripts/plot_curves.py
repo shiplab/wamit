@@ -66,7 +66,9 @@ def plot_curves(tipo, arq_n_d, per, dof_plot, inc_plot, NBODY=1, multi_fig=False
         n_col = 2
         n_lin = math.ceil(dof_plot_len/2)
     
-    nfigs=1    
+    nfigs=1  
+
+    ##### ATENÇÃO: A ROTINA PRECISA IDENTIFICAR SE OS CORPOS ESTÃO FIXOS SE NÃO OS RAOS NÃO ODEM SER PLOTADOS  
     if NBODY>1:
         nfigs = 2
     

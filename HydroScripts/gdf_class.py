@@ -203,8 +203,8 @@ class GDF:
     
             # Set evaluation delta
             #surf.delta = 0.025
-            surf[ii].delta_u = .02 #1/(2*self.Mu[ii]) #0.025
-            surf[ii].delta_v = .02 #1/(2*self.Mv[ii]) #0.025#
+            surf[ii].delta_u = .01 #1/(2*self.Mu[ii]) #0.025
+            surf[ii].delta_v = .01 #1/(2*self.Mv[ii]) #0.025#
             
             surf[ii].evaluate()
             surf[ii].tessellate() # The tesselation function provides triangles faces in which the evaluations will be done

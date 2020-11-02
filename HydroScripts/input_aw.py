@@ -19,7 +19,7 @@ drift = True
 drift_analysis = ['m'] # 'm' - momentum, 'p' - pressure, 'c' - control surface
 
 # WNF Mean Drift
-wnf_drift = ['m']
+wnf_drift = True
 
 # Figures
 save_fig = True
